@@ -3,6 +3,10 @@
 __pycache__/
 *.py[cod]
 
+# ignore VScode settings
+
+.vscode/
+
 # C extensions
 *.so
 
