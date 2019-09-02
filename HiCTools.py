@@ -8,8 +8,17 @@ import pandas as pd
 import bioframe
 import cooler
 import warnings
-from typing import Tuple
+import pairtools
+from typing import Tuple, Dict
 import numpy as np
+
+
+# define type aliases
+
+cisTransPairs = Dict[str, pd.DataFrame]
+pairsSamples = Dict[str, cisTransPairs]
+
+# define functions
 
 
 def getExpected(clr: cooler.Cooler, arms: pd.DataFrame,
@@ -129,3 +138,47 @@ def slidingDiamond(array: np.ndarray, sideLen: int = 6) -> Tuple[np.ndarray, np.
         # append x-value for this particular bin
         binAccumulator.append(np.mean(range(i, (i+halfWindow) + 1,)))
     return (np.array(binAccumulator - np.median(binAccumulator)), np.array(diamondAccumulator))
+
+
+def loadPairs(path: str) -> pd.DataFrame:
+    """Function to load a .pairs or .pairsam file
+    into a pandas dataframe.
+    This only works for relatively small files!"""
+    # get handels for header and pairs_body
+    header, pairs_body = pairtools._headerops.get_header(
+            pairtools._fileio.auto_open(path, 'r'))
+    # extract column names from header
+    cols = pairtools._headerops.extract_column_names(header)
+    # read data into dataframe
+    frame = pd.read_csv(pairs_body, sep="\t", names=cols)
+    return frame
+
+
+def downSamplePairs(sampleDict: pairsSamples, Distance: int = 10**4) -> pairsSamples:
+    """Will downsample cis and trans reads in sampleDict to contain
+    as many combined cis and trans reads as the sample with the lowest readnumber of the
+    specified distance. """
+    # initialize output dictionary
+    outDict = {sample: {} for sample in sampleDict}
+    for sample in sampleDict.keys():
+        # create temporary dataframes
+        cisTemp = sampleDict[sample]["cis"]
+        cisTemp["rType"] = "cis"
+        transTemp = sampleDict[sample]["trans"]
+        transTemp["rType"] = "trans"
+        # concatenate them and store in outdict
+        outDict[sample]["all"] = pd.concat((cisTemp, transTemp))
+        # filter on distance
+        outDict[sample]["all"] = outDict[sample]["all"].loc[(outDict[sample]["all"]["pos2"] - outDict[sample]["all"]["pos1"]) > Distance, :]
+    # get the minimum number of reads
+    minReads = min([len(i["all"]) for i in outDict.values()])
+    # do the downsampling and split into cis and trans
+    for sample in outDict.keys():
+        outDict[sample]["all"] = outDict[sample]["all"].sample(n=minReads)
+        outDict[sample]["cis"] = outDict[sample]["all"].loc[outDict[sample]
+                                                            ["all"]["rType"] == "cis", :]
+        outDict[sample]["trans"] = outDict[sample]["all"].loc[outDict[sample]
+                                                              ["all"]["rType"] == "trans", :]
+        # get rid of all reads
+        outDict[sample].pop("all")
+    return outDict
