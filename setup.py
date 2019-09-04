@@ -3,7 +3,6 @@ import setuptools
 setuptools.setup(
     name='NGS',
     version='0.1',
-    scripts=['HiCTools.py'],
     author="Michael Mitter",
     author_email="michael_mitter@hotmail.com",
     description="Scripts for NGS analysis",
