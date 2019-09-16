@@ -93,6 +93,32 @@ def assignRegions(window: int, binsize: int, chroms: pd.Series,
     return snipping_windows
 
 
+def assignRegions2d(window: int, binsize: int, chroms1: pd.Series,
+                    positions1: pd.Series, chroms2: pd.Series,
+                    positions2: pd.Series, arms: pd.DataFrame) -> pd.DataFrame:
+    """Constructs a 2d region around a series of chromosomal location pairs.
+    Window specifies the windowsize for the constructed regions. The total region
+    assigned will be pos-window until pos+window. The binsize specifies the size
+    of the HiC bins. The positions which represent the center of the regions
+    is given by  the chroms1 and chroms2 series as well as the
+    positions1 and positions2 sereis."""
+    # construct windows from the passed chromosomes 1 and positions 1
+    windows1 = assignRegions(window, binsize, chroms1, positions1, arms)
+    windows1.columns = [str(i) + "1" for i in windows1.columns]
+    # construct windows from the passed chromosomes 1 and positions 1
+    windows2 = assignRegions(window, binsize, chroms2, positions2, arms)
+    windows2.columns = [str(i) + "2" for i in windows2.columns]
+    windows = pd.concat((windows1, windows2), axis=1)
+    # concatenate windows
+    windows = pd.concat((windows1, windows2), axis=1)
+    # filter for mapping to different regions
+    windowsFinal = windows.loc[windows["region1"] == windows["region2"], :]
+    # subset data and rename regions
+    windowsSmall = windowsFinal[["chrom1", "start1", "end1", "chrom2", "start2", "end2", "region1"]]
+    windowsSmall.columns = ["chrom1", "start1", "end1", "chrom2", "start2", "end2", "region"]
+    return windowsSmall
+
+
 def doPileupObsExp(clr: cooler.Cooler, expected_df: pd.DataFrame,
                    snipping_windows: pd.DataFrame, proc: int = 5) -> np.ndarray:
     """Takes a cooler file handle, an expected dataframe
@@ -117,6 +143,25 @@ def doPileupObsExp(clr: cooler.Cooler, expected_df: pd.DataFrame,
         oe_pile[:, :, :], axis=2
     )
     return collapsed_pile
+
+
+def doPileupICCF(clr: cooler.Cooler, snipping_windows: pd.DataFrame,
+                 proc: int = 5) -> np.ndarray:
+    """Takes a cooler file handle and snipping windows constructed
+    by assignRegions and performs a pileup on all these regions
+    based on the corrected HiC counts. Returns a numpy array
+    that contains averages of all selected regions."""
+    ICCF_snipper = cooltools.snipping.CoolerSnipper(clr)
+    with multiprocess.Pool(proc) as pool:
+        ICCF_pile = cooltools.snipping.pileup(
+                                            snipping_windows,
+                                            ICCF_snipper.select, ICCF_snipper.snip,
+                                            map=pool.map)
+    # calculate the average of all windows
+    collapsed_pile_plus = np.nanmean(
+        ICCF_pile[:, :, :], axis=2
+    )
+    return collapsed_pile_plus
 
 
 def slidingDiamond(array: np.ndarray, sideLen: int = 6) -> Tuple[np.ndarray, np.ndarray]:
