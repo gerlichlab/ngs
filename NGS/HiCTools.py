@@ -243,7 +243,7 @@ def downSamplePairs(sampleDict: pairsSamples, Distance: int = 10**4) -> pairsSam
     return outDict
 
 
-def pileToframe(pile: np.ndarray) -> pd.DataFrame:
+def pileToFrame(pile: np.ndarray) -> pd.DataFrame:
     """Takes a pile of pileup windows produced
     by doPileupsObsExp/doPileupsICCF (with collapse set to False;
     this is numpy ndarray with the following dimensions:
@@ -256,3 +256,14 @@ def pileToframe(pile: np.ndarray) -> pd.DataFrame:
     Window3: | Pixel 1 | Pixel 2 | Pixel3| ...
     """
     return pile.flatten().reshape(pile.shape[0]**2, pile.shape[2])
+
+
+def frameToPile(df: pd.Dataframe) -> np.ndarray:
+    """Takes a dataframe representation of
+    a pileup produced by pileToFrame and
+    reconstructs the numpy array pile representation:
+    output.shape = [windoSize, windowSize, windowNumber])"""
+    array = df.values
+    return array.reshape(int(np.sqrt(array.shape[0])),
+                         int(np.sqrt(array.shape[0])),
+                         array.shape[1])
