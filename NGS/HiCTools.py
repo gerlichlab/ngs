@@ -120,12 +120,16 @@ def assignRegions2d(window: int, binsize: int, chroms1: pd.Series,
 
 
 def doPileupObsExp(clr: cooler.Cooler, expected_df: pd.DataFrame,
-                   snipping_windows: pd.DataFrame, proc: int = 5) -> np.ndarray:
+                   snipping_windows: pd.DataFrame, proc: int = 5,
+                   collapse: bool = True) -> np.ndarray:
     """Takes a cooler file handle, an expected dataframe
     constructed by getExpected, snipping windows constructed
     by assignRegions and performs a pileup on all these regions
     based on the obs/exp value. Returns a numpy array
-    that contains averages of all selected regions."""
+    that contains averages of all selected regions.
+    The collapse parameter specifies whether to return
+    the average window over all piles (collapse=True), or the individual
+    windows (collapse=False)."""
     oe_snipper = cooltools.snipping.ObsExpSnipper(clr, expected_df)
     # set warnings filter to ignore RuntimeWarnings since cooltools
     # does not check whether there are inf or 0 values in
@@ -138,30 +142,39 @@ def doPileupObsExp(clr: cooler.Cooler, expected_df: pd.DataFrame,
                 snipping_windows,
                 oe_snipper.select, oe_snipper.snip,
                 map=pool.map)
-    # calculate the average of all windows
-    collapsed_pile = np.nanmean(
-        oe_pile[:, :, :], axis=2
-    )
-    return collapsed_pile
+    if collapse:
+        # calculate the average of all windows
+        collapsed_pile = np.nanmean(
+            oe_pile[:, :, :], axis=2
+        )
+        return collapsed_pile
+    else:
+        return oe_pile
 
 
 def doPileupICCF(clr: cooler.Cooler, snipping_windows: pd.DataFrame,
-                 proc: int = 5) -> np.ndarray:
+                 proc: int = 5, collapse: bool = True) -> np.ndarray:
     """Takes a cooler file handle and snipping windows constructed
     by assignRegions and performs a pileup on all these regions
     based on the corrected HiC counts. Returns a numpy array
-    that contains averages of all selected regions."""
+    that contains averages of all selected regions. The collapse
+    parameter specifies whether to return
+    the average window over all piles (collapse=True), or the individual
+    windows (collapse=False)."""
     ICCF_snipper = cooltools.snipping.CoolerSnipper(clr)
     with multiprocess.Pool(proc) as pool:
         ICCF_pile = cooltools.snipping.pileup(
                                             snipping_windows,
                                             ICCF_snipper.select, ICCF_snipper.snip,
                                             map=pool.map)
-    # calculate the average of all windows
-    collapsed_pile_plus = np.nanmean(
-        ICCF_pile[:, :, :], axis=2
-    )
-    return collapsed_pile_plus
+    if collapse:
+        # calculate the average of all windows
+        collapsed_pile_plus = np.nanmean(
+            ICCF_pile[:, :, :], axis=2
+        )
+        return collapsed_pile_plus
+    else:
+        return ICCF_pile
 
 
 def slidingDiamond(array: np.ndarray, sideLen: int = 6) -> Tuple[np.ndarray, np.ndarray]:
@@ -189,6 +202,7 @@ def loadPairs(path: str) -> pd.DataFrame:
     """Function to load a .pairs or .pairsam file
     into a pandas dataframe.
     This only works for relatively small files!"""
+    # TODO Add iterator to load chunks to be able to handle large files
     # get handels for header and pairs_body
     header, pairs_body = pairtools._headerops.get_header(
             pairtools._fileio.auto_open(path, 'r'))
