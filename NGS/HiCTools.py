@@ -241,3 +241,18 @@ def downSamplePairs(sampleDict: pairsSamples, Distance: int = 10**4) -> pairsSam
         # get rid of all reads
         outDict[sample].pop("all")
     return outDict
+
+
+def pileToframe(pile: np.ndarray) -> pd.DataFrame:
+    """Takes a pile of pileup windows produced
+    by doPileupsObsExp/doPileupsICCF (with collapse set to False;
+    this is numpy ndarray with the following dimensions:
+    pile.shape = [windoSize, windowSize, windowNumber])
+    and arranges them as a dataframe with the pixels of the
+    pile flattened into columns and each individual window
+    being a row.
+    Window1: | Pixel 1 | Pixel 2 | Pixel3| ...
+    Window2: | Pixel 1 | Pixel 2 | Pixel3| ...
+    Window3: | Pixel 1 | Pixel 2 | Pixel3| ...
+    """
+    return pile.flatten().reshape(pile.shape[0]**2, pile.shape[2])
