@@ -255,15 +255,4 @@ def pileToFrame(pile: np.ndarray) -> pd.DataFrame:
     Window2: | Pixel 1 | Pixel 2 | Pixel3| ...
     Window3: | Pixel 1 | Pixel 2 | Pixel3| ...
     """
-    return pile.flatten().reshape(pile.shape[0]**2, pile.shape[2])
-
-
-def frameToPile(df: pd.Dataframe) -> np.ndarray:
-    """Takes a dataframe representation of
-    a pileup produced by pileToFrame and
-    reconstructs the numpy array pile representation:
-    output.shape = [windoSize, windowSize, windowNumber])"""
-    array = df.values
-    return array.reshape(int(np.sqrt(array.shape[0])),
-                         int(np.sqrt(array.shape[0])),
-                         array.shape[1])
+    return pd.DataFrame(pile.flatten().reshape(pile.shape[0]**2, pile.shape[2])).transpose()
