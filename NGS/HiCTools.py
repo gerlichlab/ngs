@@ -177,7 +177,7 @@ def doPileupICCF(clr: cooler.Cooler, snipping_windows: pd.DataFrame,
         return ICCF_pile
 
 
-def slidingDiamond(array: np.ndarray, sideLen: int = 6) -> Tuple[np.ndarray, np.ndarray]:
+def slidingDiamond(array: np.ndarray, sideLen: int = 6, centerX: bool = True) -> Tuple[np.ndarray, np.ndarray]:
     """Will slide a dimaond of side length 'sideLen'
     down the diagonal of the passed array and return
     the average values for each position and
@@ -186,16 +186,31 @@ def slidingDiamond(array: np.ndarray, sideLen: int = 6) -> Tuple[np.ndarray, np.
     # initialize accumulators for diamond value and x-position
     diamondAccumulator = list()
     binAccumulator = list()
-    halfWindow = sideLen//2
-    for i in range(0, (array.shape[0] - halfWindow)):
-        # extract diamond
-        diamondArray = array[i: (i+halfWindow) + 1, i:(i+halfWindow) + 1]
-        # set inf to nan for calculation of mean
-        diamondArray[np.isinf(diamondArray)] = np.nan
-        diamondAccumulator.append(np.nanmean(diamondArray))
-        # append x-value for this particular bin
-        binAccumulator.append(np.mean(range(i, (i+halfWindow) + 1,)))
-    return (np.array(binAccumulator - np.median(binAccumulator)), np.array(diamondAccumulator))
+    if sideLen % 2 == 0:
+        halfWindow = sideLen
+        for i in range(0, (array.shape[0] - halfWindow)):
+            # extract diamond
+            diamondArray = array[i: (i+halfWindow) + 1, i:(i+halfWindow) + 1]
+            # set inf to nan for calculation of mean
+            diamondArray[np.isinf(diamondArray)] = np.nan
+            diamondAccumulator.append(np.nanmean(diamondArray))
+            # append x-value for this particular bin
+            binAccumulator.append(np.median(range(i, (i+halfWindow) + 1,)))
+    else:
+        halfWindow = sideLen//2
+        for i in range(halfWindow, (array.shape[0] - halfWindow)):
+            # extract diamond
+            diamondArray = array[i-halfWindow: (i+halfWindow) + 1, i-halfWindow:(i+halfWindow) + 1]
+            # set inf to nan for calculation of mean
+            diamondArray[np.isinf(diamondArray)] = np.nan
+            diamondAccumulator.append(np.nanmean(diamondArray))
+            # append x-value for this particular bin
+            binAccumulator.append(np.median(range(i - halfWindow, (i+halfWindow) + 1,)))
+    if centerX:
+        xOut = (np.array(binAccumulator - np.median(binAccumulator)))
+    else:
+        xOut = np.array(binAccumulator)
+    return (xOut, np.array(diamondAccumulator))
 
 
 def loadPairs(path: str) -> pd.DataFrame:
