@@ -273,9 +273,23 @@ def pileToFrame(pile: np.ndarray) -> pd.DataFrame:
     return pd.DataFrame(pile.flatten().reshape(pile.shape[0]**2, pile.shape[2])).transpose()
 
 
+def getDiagIndices(arr: np.ndarray) -> list:
+    """Helper function that returns the indices of the diagonal
+    of a given array into a flattened representation of the array.
+    For example, the 3 by 3 array:
+    [0, 1, 2]
+    [3, 4, 5]
+    [6, 7, 8]
+    would have diagonal indices [0, 4, 8].
+    """
+    assert arr.shape[0] == arr.shape[1], "Please supply a square array!"
+    shape = arr.shape[0]
+    return [i + index for index, i in enumerate(range(0, shape**2 - shape + 1, shape))]
+
+
 def getPairingScore(clr: cooler.Cooler, windowsize: int = 4 * 10**4,
                     func: Callable = np.mean, regions: pd.DataFrame = pd.DataFrame(),
-                    norm: bool = True) -> pd.DataFrame:
+                    norm: bool = True, blankDiag: bool = True) -> pd.DataFrame:
     """Takes a cooler file (clr),
     a windowsize (windowsize), a summary
     function (func) and a set of genomic
@@ -286,7 +300,9 @@ def getPairingScore(clr: cooler.Cooler, windowsize: int = 4 * 10**4,
     at the location in the supplied cooler file. The results are
     returned as a dataframe. If no regions are supplied, regions
     are constructed for each bin in the cooler file to
-    construct a genome-wide pairing score."""
+    construct a genome-wide pairing score. Norm refers to whether the median of the
+    calculated pairing score should be subtracted from the supplied vlaues and blankDiga
+    refers to whether the diagonal should be blanked before calculating pairing score."""
     # Check whether genomic regions were supplied
     if len(regions) == 0:
         # If no regions are supplied, pregenerate all bins; drop bins with nan weights
@@ -310,6 +326,10 @@ def getPairingScore(clr: cooler.Cooler, windowsize: int = 4 * 10**4,
     pile = doPileupICCF(clr, windows, collapse=False)
     # convert to dataframe
     pileFrame = pileToFrame(pile)
+    if blankDiag:
+        dummyarray = np.arange(pile[:, :, 0].shape[0]**2).reshape(pile[:, :, 0].shape[0], pile[:, :, 0].shape[0])
+        indices = getDiagIndices(dummyarray)
+        pileFrame.iloc[:, indices] = np.nan
     # apply function to each row (row = individual window)
     summarized = pileFrame.apply(func, axis=1)
     # subset regions with regions that were assigned windows
