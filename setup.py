@@ -10,6 +10,15 @@ setuptools.setup(
     long_description_content_type="",
     url="https://github.com/gerlichlab/NGS",
     packages=setuptools.find_packages(),
+    install_requires=[
+          'multiprocess',
+          'cooltools',
+          'pandas',
+          'bioframe',
+          'cooler',
+          'pairtools',
+          'numpy'
+      ],
     classifiers=[
         "Programming Language :: Python :: 3",
          "Operating System :: OS Independent",
