@@ -8,4 +8,4 @@ NGS has a number of requirements that will be installed by pip if you do not alr
 
 # Usage
 
-Refer to [documentation](link).
+Refer to [documentation](Doc.md).
