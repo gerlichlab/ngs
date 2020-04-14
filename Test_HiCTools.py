@@ -30,17 +30,57 @@ class TestResources(unittest.TestCase):
 class TestSlidingDiamond(unittest.TestCase):
     def setUp(self):
         self.gaussian = generate2dGauss(mean=[0, 0], variance=[[3, 0], [0, 3]], gridsize=15)
+        self.testMatrix = np.array([[1, 2, 3, 4, 5, 6],
+                                    [6, 5, 4, 3, 2, 1],
+                                    [2, 4, 6, 8, 10, 12],
+                                    [1, 2, 2, 3, 3, 4],
+                                    [5, 5, 4, 4, 3, 3],
+                                    [1, 1, 1, 1, 1, 1]], dtype=np.float64)
     def testCenterEnrichment(self):
         """Tests center enrichment of sliding diamond"""
         x, y = HT.slidingDiamond(self.gaussian, sideLen=6)
         centerMean = np.mean(y[np.where(np.abs(x) < 1)])
         borderMean = np.mean(y[:5])
         self.assertTrue(centerMean > 5 * borderMean)
+    def testEvenDiamond(self):
+        """Tests sliding a diamond of even sidelength"""
+        x, y = HT.slidingDiamond(self.testMatrix, sideLen=2, centerX=False)
+        xCheck = np.array([0.5, 1.5, 2.5, 3.5, 4.5])
+        yCheck = np.array([3.5, 4.75, 4.75, 3.25, 2.0])
+        self.assertTrue(all(np.isclose(x, xCheck)))
+        self.assertTrue(all(np.isclose(y, yCheck)))
+    def testEvenDiamondXNorm(self):
+        """Tests sliding a diamond of even sidelength
+        with x normalization"""
+        x, y = HT.slidingDiamond(self.testMatrix, sideLen=2, centerX=True)
+        xCheck = np.array([-2, -1, 0, 1, 2])
+        yCheck = np.array([3.5, 4.75, 4.75, 3.25, 2.0])
+        self.assertTrue(all(np.isclose(x, xCheck)))
+        self.assertTrue(all(np.isclose(y, yCheck)))
+    def testOddDiamond(self):
+        """Tests sliding a diamond of even sidelength"""
+        x, y = HT.slidingDiamond(self.testMatrix, sideLen=3, centerX=False)
+        xCheck = np.array([1, 2, 3, 4])
+        yCheck = np.array([3.666666666, 4.11111111, 4.77777777, 2.55555555])
+        self.assertTrue(all(np.isclose(x, xCheck)))
+        self.assertTrue(all(np.isclose(y, yCheck)))
+    def testOddDiamondXNorm(self):
+        """Tests sliding a diamond of even sidelength"""
+        x, y = HT.slidingDiamond(self.testMatrix, sideLen=3, centerX=True)
+        xCheck = np.array([-1.5, -0.5, 0.5, 1.5])
+        yCheck = np.array([3.666666666, 4.11111111, 4.77777777, 2.55555555])
+        self.assertTrue(all(np.isclose(x, xCheck)))
+        self.assertTrue(all(np.isclose(y, yCheck)))
+
 
 def suiteAll():
     suite = unittest.TestSuite()
     suite.addTest(TestResources("testArms"))
     suite.addTest(TestSlidingDiamond("testCenterEnrichment"))
+    suite.addTest(TestSlidingDiamond("testEvenDiamond"))
+    suite.addTest(TestSlidingDiamond("testEvenDiamondXNorm"))
+    suite.addTest(TestSlidingDiamond("testOddDiamond"))
+    suite.addTest(TestSlidingDiamond("testOddDiamondXNorm"))
     return suite
 
 if __name__ == "__main__":

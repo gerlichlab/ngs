@@ -188,14 +188,14 @@ def slidingDiamond(array: np.ndarray, sideLen: int = 6, centerX: bool = True) ->
     binAccumulator = list()
     if sideLen % 2 == 0:
         halfWindow = sideLen
-        for i in range(0, (array.shape[0] - halfWindow)):
+        for i in range(0, (array.shape[0] - halfWindow + 1)):
             # extract diamond
-            diamondArray = array[i: (i+halfWindow) + 1, i:(i+halfWindow) + 1]
+            diamondArray = array[i: (i+halfWindow), i:(i+halfWindow)]
             # set inf to nan for calculation of mean
             diamondArray[np.isinf(diamondArray)] = np.nan
             diamondAccumulator.append(np.nanmean(diamondArray))
             # append x-value for this particular bin
-            binAccumulator.append(np.median(range(i, (i+halfWindow) + 1,)))
+            binAccumulator.append(np.median(range(i, (i+halfWindow),)))
     else:
         halfWindow = sideLen//2
         for i in range(halfWindow, (array.shape[0] - halfWindow)):
