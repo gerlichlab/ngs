@@ -160,7 +160,7 @@ class TestPileupICCF(unittest.TestCase):
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
         result = HT.doPileupICCF(c, assigned, proc=1, collapse=False)
         expected = np.load("testFiles/test_pileups_iccf_noCollapse.npy")
-        self.assertTrue(np.array_equal(result, expected))
+        self.assertTrue(np.allclose(result, expected))
 
     def test_collapse(self):  # Simulated cooler
         positionFrame = pd.read_csv("testFiles/posPileups.csv")
@@ -171,7 +171,35 @@ class TestPileupICCF(unittest.TestCase):
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
         result = HT.doPileupICCF(c, assigned, proc=1, collapse=True)
         expected = np.load("testFiles/test_pileups_iccf_collapse.npy")
-        self.assertTrue(np.array_equal(result, expected))
+        self.assertTrue(np.allclose(result, expected))
+
+
+class TestPileupObsExp(unittest.TestCase):
+    def test_no_collapse(self):  # Simulated cooler
+        """tests extracting individual windows
+        without averaging."""
+        positionFrame = pd.read_csv("testFiles/posPileups.csv")
+        arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
+        assigned = HT.assignRegions(
+            50000, 10000, positionFrame["chrom"], positionFrame["pos"], arms
+        )
+        c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
+        expF = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        result = HT.doPileupObsExp(c, expF, assigned, proc=1, collapse=False)
+        expected = np.load("testFiles/test_pileups_obsExp_noCollapse.npy")
+        self.assertTrue(np.allclose(result, expected))
+
+    def test_collapse(self):  # Simulated cooler
+        positionFrame = pd.read_csv("testFiles/posPileups.csv")
+        arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
+        assigned = HT.assignRegions(
+            50000, 10000, positionFrame["chrom"], positionFrame["pos"], arms
+        )
+        c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
+        expF = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        result = HT.doPileupObsExp(c, expF, assigned, proc=1, collapse=True)
+        expected = np.load("testFiles/test_pileups_obsExp_collapse.npy")
+        self.assertTrue(np.allclose(result, expected))
 
 
 if __name__ == "__main__":
