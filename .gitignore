@@ -64,3 +64,4 @@ target/
 # misc
 
 testFiles/generateTestFiles/*
+playground/*
