@@ -34,7 +34,7 @@ def getExpected(
     with multiprocess.Pool(proc) as pool:
         expected = cooltools.expected.diagsum(
             clr,
-            list(arms.itertuples(index=False, name=None)),
+            tuple(arms.itertuples(index=False, name=None)),
             transforms={"balanced": lambda p: p["count"] * p["weight1"] * p["weight2"]},
             map=pool.map,
             ignore_diags=ignoreDiagonals,
