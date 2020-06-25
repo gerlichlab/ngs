@@ -77,7 +77,7 @@ class TestSlidingDiamond(unittest.TestCase):
 class TestGetExpected(unittest.TestCase):
     def setUp(self):
         self.cooler = cooler.Cooler("testFiles/test1.mcool::/resolutions/5000000")
-        self.arms = HT.getArmsHg19()
+        self.arms = pd.read_csv("testFiles/arms.csv")
 
     def test_ignore0_diag(self):
         result = HT.getExpected(self.cooler, self.arms,
@@ -97,15 +97,28 @@ class TestGetExpected(unittest.TestCase):
         checkFrame = pd.read_csv("testFiles/test1_expected_ignore_2_diag.csv")
         assert_frame_equal(result, checkFrame)
 
-def suiteAll():
-    suite = unittest.TestSuite()
-    suite.addTest(TestResources("testArms"))
-    suite.addTest(TestSlidingDiamond("testCenterEnrichment"))
-    suite.addTest(TestSlidingDiamond("testEvenDiamond"))
-    suite.addTest(TestSlidingDiamond("testEvenDiamondXNorm"))
-    suite.addTest(TestSlidingDiamond("testOddDiamond"))
-    suite.addTest(TestSlidingDiamond("testOddDiamondXNorm"))
-    return suite
+
+class TestAssignRegions(unittest.TestCase):
+    def setUp(self):
+        self.arms = pd.read_csv("testFiles/arms.csv")
+
+    def test_case1(self):
+        bedFile = pd.read_csv("testFiles/testSmall.bed", sep="\t")
+        result = HT.assignRegions(window=500000, binsize=50000,
+                                  chroms=bedFile["chrom"],
+                                  positions=bedFile["pos"],
+                                  arms=self.arms)
+        expected = pd.read_csv("testFiles/testAssignRegions.csv")
+        assert_frame_equal(result, expected)
+
+    def test_case2(self):
+        bedFile = pd.read_csv("testFiles/testSmall_2.bed", sep="\t")
+        result = HT.assignRegions(window=500000, binsize=50000,
+                                  chroms=bedFile["chrom"],
+                                  positions=bedFile["pos"],
+                                  arms=self.arms)
+        expected = pd.read_csv("testFiles/testAssignRegions_2.csv")
+        assert_frame_equal(result, expected)
 
 if __name__ == '__main__':
     res = unittest.main(verbosity=3, exit=False)

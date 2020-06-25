@@ -63,4 +63,4 @@ target/
 
 # misc
 
-generateTestFiles.py
+testFiles/generateTestFiles/*
