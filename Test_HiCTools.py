@@ -6,6 +6,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 import cooler
 from pandas.testing import assert_frame_equal
+from functools import partial
 
 # define functions
 
@@ -214,6 +215,51 @@ class TestPairingScoreObsExp(unittest.TestCase):
         )
         expected = pd.read_csv("testFiles/test_pairingScore_obsExp_specificRegions.csv")
         assert_frame_equal(pairingScore, expected)
+
+    def test_genomeWide_notNorm(self):
+        arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
+        c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
+        expF = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        pairingScore = HT.getPairingScoreObsExp(c, expF, 50000, arms=arms, norm=False)
+        expected = pd.read_csv(
+            "testFiles/test_pairingScore_obsExp_genomeWide.csv",
+            dtype={
+                name: pairingScore.dtypes[name] for name in pairingScore.dtypes.index
+            },
+        )
+        assert_frame_equal(pairingScore, expected)
+
+    def test_genomeWide_norm(self):
+        positionFrame = pd.read_csv("testFiles/posPileups.csv")
+        positionFrame.loc[:, "mid"] = positionFrame["pos"]
+        arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
+        c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
+        expF = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        pairingScore = HT.getPairingScoreObsExp(c, expF, 50000, arms=arms, norm=True)
+        expected = pd.read_csv(
+            "testFiles/test_pairingScore_obsExp_genomeWide_Norm.csv",
+            dtype={
+                name: pairingScore.dtypes[name] for name in pairingScore.dtypes.index
+            },
+        )
+        assert_frame_equal(pairingScore, expected)
+
+    def test_wrongParameters(self):
+        positionFrame = pd.read_csv("testFiles/posPileups.csv")
+        positionFrame.loc[:, "mid"] = positionFrame["pos"]
+        arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
+        c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
+        expF = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        badCall = partial(
+            HT.getPairingScoreObsExp,
+            c,
+            expF,
+            50000,
+            regions=positionFrame,
+            arms=arms,
+            norm=True,
+        )
+        self.assertRaises(ValueError, badCall)
 
 
 if __name__ == "__main__":
