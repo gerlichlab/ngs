@@ -139,6 +139,32 @@ class TestAssignRegions(unittest.TestCase):
         assert_frame_equal(result, expected)
 
 
+class TestPileupICCF(unittest.TestCase):
+    def test_no_collapse(self):  # Simulated cooler
+        """tests extracting individual windows
+        without averaging."""
+        positionFrame = pd.read_csv("testFiles/posPileups.csv")
+        arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
+        assigned = HT.assignRegions(
+            50000, 10000, positionFrame["chrom"], positionFrame["pos"], arms
+        )
+        c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
+        result = HT.doPileupICCF(c, assigned, proc=1, collapse=False)
+        expected = np.load("testFiles/test_pileups_iccf_noCollapse.npy")
+        self.assertTrue(np.array_equal(result, expected))
+
+    def test_collapse(self):  # Simulated cooler
+        positionFrame = pd.read_csv("testFiles/posPileups.csv")
+        arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
+        assigned = HT.assignRegions(
+            50000, 10000, positionFrame["chrom"], positionFrame["pos"], arms
+        )
+        c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
+        result = HT.doPileupICCF(c, assigned, proc=1, collapse=True)
+        expected = np.load("testFiles/test_pileups_iccf_collapse.npy")
+        self.assertTrue(np.array_equal(result, expected))
+
+
 if __name__ == "__main__":
     res = unittest.main(verbosity=3, exit=False)
 
