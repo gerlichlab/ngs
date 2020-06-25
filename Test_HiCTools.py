@@ -4,6 +4,8 @@ from NGS import HiCTools as HT
 from pandas.testing import assert_frame_equal
 import numpy as np
 from scipy.stats import multivariate_normal
+import cooler
+from pandas.testing import assert_frame_equal
 
 # define functions
 
@@ -72,6 +74,28 @@ class TestSlidingDiamond(unittest.TestCase):
         self.assertTrue(all(np.isclose(x, xCheck)))
         self.assertTrue(all(np.isclose(y, yCheck)))
 
+class TestGetExpected(unittest.TestCase):
+    def setUp(self):
+        self.cooler = cooler.Cooler("testFiles/test1.mcool::/resolutions/5000000")
+        self.arms = HT.getArmsHg19()
+
+    def test_ignore0_diag(self):
+        result = HT.getExpected(self.cooler, self.arms,
+                                proc=1, ignoreDiagonals=0)
+        checkFrame = pd.read_csv("testFiles/test1_expected_ignore_0_diag.csv")
+        assert_frame_equal(result, checkFrame)
+
+    def test_ignore1_diag(self):
+        result = HT.getExpected(self.cooler, self.arms,
+                        proc=1, ignoreDiagonals=1)
+        checkFrame = pd.read_csv("testFiles/test1_expected_ignore_1_diag.csv")
+        assert_frame_equal(result, checkFrame)
+
+    def test_ignore2_diag(self):
+        result = HT.getExpected(self.cooler, self.arms,
+                        proc=1, ignoreDiagonals=2)
+        checkFrame = pd.read_csv("testFiles/test1_expected_ignore_2_diag.csv")
+        assert_frame_equal(result, checkFrame)
 
 def suiteAll():
     suite = unittest.TestSuite()
@@ -83,6 +107,6 @@ def suiteAll():
     suite.addTest(TestSlidingDiamond("testOddDiamondXNorm"))
     return suite
 
-if __name__ == "__main__":
-    runner = unittest.TextTestRunner()
-    runner.run(suiteAll())
+if __name__ == '__main__':
+    res = unittest.main(verbosity=3, exit=False)
+
