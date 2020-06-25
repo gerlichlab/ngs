@@ -92,30 +92,13 @@ class TestSlidingDiamond(unittest.TestCase):
 
 class TestGetExpected(unittest.TestCase):
     def setUp(self):
-        self.cooler1 = cooler.Cooler("testFiles/test1.mcool::/resolutions/5000000")
-        self.cooler2 = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        self.arms1 = pd.read_csv("testFiles/arms.csv")
-        self.arms2 = pd.DataFrame(
+        self.cooler = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
+        self.arms= pd.DataFrame(
             {"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0]
         )
 
-    def test_ignore0_diag(self):  # calculated using HT.getExpected
-        result = HT.getExpected(self.cooler1, self.arms1, proc=1, ignoreDiagonals=0)
-        checkFrame = pd.read_csv("testFiles/test1_expected_ignore_0_diag.csv")
-        assert_frame_equal(result, checkFrame)
-
-    def test_ignore1_diag(self):  # calculated using HT.getExpected
-        result = HT.getExpected(self.cooler1, self.arms1, proc=1, ignoreDiagonals=1)
-        checkFrame = pd.read_csv("testFiles/test1_expected_ignore_1_diag.csv")
-        assert_frame_equal(result, checkFrame)
-
-    def test_ignore2_diag(self):  # calculated using HT.getExpected
-        result = HT.getExpected(self.cooler1, self.arms1, proc=1, ignoreDiagonals=2)
-        checkFrame = pd.read_csv("testFiles/test1_expected_ignore_2_diag.csv")
-        assert_frame_equal(result, checkFrame)
-
     def test_synthetic_data(self):  # calculated by hand
-        result = HT.getExpected(self.cooler2, self.arms2, proc=1, ignoreDiagonals=0)
+        result = HT.getExpected(self.cooler, self.arms, proc=1, ignoreDiagonals=0)
         check = pd.read_csv("testFiles/test_expected_chrSyn.csv")
         assert_frame_equal(result, check)
 
