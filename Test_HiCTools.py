@@ -9,6 +9,7 @@ from pandas.testing import assert_frame_equal
 
 # define functions
 
+
 def generate2dGauss(mean, variance, gridsize=10, spacing=0.2):
     # define grid
     x, y = np.mgrid[-gridsize:gridsize:spacing, -gridsize:gridsize:spacing]
@@ -21,6 +22,7 @@ def generate2dGauss(mean, variance, gridsize=10, spacing=0.2):
     rvmat1[np.diag_indices_from(rvmat1)] = np.nan
     return rvmat1
 
+
 # define tests
 class TestResources(unittest.TestCase):
     def testArms(self):
@@ -31,19 +33,28 @@ class TestResources(unittest.TestCase):
 
 class TestSlidingDiamond(unittest.TestCase):
     def setUp(self):
-        self.gaussian = generate2dGauss(mean=[0, 0], variance=[[3, 0], [0, 3]], gridsize=15)
-        self.testMatrix = np.array([[1, 2, 3, 4, 5, 6],
-                                    [6, 5, 4, 3, 2, 1],
-                                    [2, 4, 6, 8, 10, 12],
-                                    [1, 2, 2, 3, 3, 4],
-                                    [5, 5, 4, 4, 3, 3],
-                                    [1, 1, 1, 1, 1, 1]], dtype=np.float64)
+        self.gaussian = generate2dGauss(
+            mean=[0, 0], variance=[[3, 0], [0, 3]], gridsize=15
+        )
+        self.testMatrix = np.array(
+            [
+                [1, 2, 3, 4, 5, 6],
+                [6, 5, 4, 3, 2, 1],
+                [2, 4, 6, 8, 10, 12],
+                [1, 2, 2, 3, 3, 4],
+                [5, 5, 4, 4, 3, 3],
+                [1, 1, 1, 1, 1, 1],
+            ],
+            dtype=np.float64,
+        )
+
     def testCenterEnrichment(self):
         """Tests center enrichment of sliding diamond"""
         x, y = HT.slidingDiamond(self.gaussian, sideLen=6)
         centerMean = np.mean(y[np.where(np.abs(x) < 1)])
         borderMean = np.mean(y[:5])
         self.assertTrue(centerMean > 5 * borderMean)
+
     def testEvenDiamond(self):
         """Tests sliding a diamond of even sidelength"""
         x, y = HT.slidingDiamond(self.testMatrix, sideLen=2, centerX=False)
@@ -51,6 +62,7 @@ class TestSlidingDiamond(unittest.TestCase):
         yCheck = np.array([3.5, 4.75, 4.75, 3.25, 2.0])
         self.assertTrue(all(np.isclose(x, xCheck)))
         self.assertTrue(all(np.isclose(y, yCheck)))
+
     def testEvenDiamondXNorm(self):
         """Tests sliding a diamond of even sidelength
         with x normalization"""
@@ -59,6 +71,7 @@ class TestSlidingDiamond(unittest.TestCase):
         yCheck = np.array([3.5, 4.75, 4.75, 3.25, 2.0])
         self.assertTrue(all(np.isclose(x, xCheck)))
         self.assertTrue(all(np.isclose(y, yCheck)))
+
     def testOddDiamond(self):
         """Tests sliding a diamond of even sidelength"""
         x, y = HT.slidingDiamond(self.testMatrix, sideLen=3, centerX=False)
@@ -66,6 +79,7 @@ class TestSlidingDiamond(unittest.TestCase):
         yCheck = np.array([3.666666666, 4.11111111, 4.77777777, 2.55555555])
         self.assertTrue(all(np.isclose(x, xCheck)))
         self.assertTrue(all(np.isclose(y, yCheck)))
+
     def testOddDiamondXNorm(self):
         """Tests sliding a diamond of even sidelength"""
         x, y = HT.slidingDiamond(self.testMatrix, sideLen=3, centerX=True)
@@ -74,26 +88,24 @@ class TestSlidingDiamond(unittest.TestCase):
         self.assertTrue(all(np.isclose(x, xCheck)))
         self.assertTrue(all(np.isclose(y, yCheck)))
 
+
 class TestGetExpected(unittest.TestCase):
     def setUp(self):
         self.cooler = cooler.Cooler("testFiles/test1.mcool::/resolutions/5000000")
         self.arms = pd.read_csv("testFiles/arms.csv")
 
     def test_ignore0_diag(self):
-        result = HT.getExpected(self.cooler, self.arms,
-                                proc=1, ignoreDiagonals=0)
+        result = HT.getExpected(self.cooler, self.arms, proc=1, ignoreDiagonals=0)
         checkFrame = pd.read_csv("testFiles/test1_expected_ignore_0_diag.csv")
         assert_frame_equal(result, checkFrame)
 
     def test_ignore1_diag(self):
-        result = HT.getExpected(self.cooler, self.arms,
-                        proc=1, ignoreDiagonals=1)
+        result = HT.getExpected(self.cooler, self.arms, proc=1, ignoreDiagonals=1)
         checkFrame = pd.read_csv("testFiles/test1_expected_ignore_1_diag.csv")
         assert_frame_equal(result, checkFrame)
 
     def test_ignore2_diag(self):
-        result = HT.getExpected(self.cooler, self.arms,
-                        proc=1, ignoreDiagonals=2)
+        result = HT.getExpected(self.cooler, self.arms, proc=1, ignoreDiagonals=2)
         checkFrame = pd.read_csv("testFiles/test1_expected_ignore_2_diag.csv")
         assert_frame_equal(result, checkFrame)
 
@@ -104,22 +116,29 @@ class TestAssignRegions(unittest.TestCase):
 
     def test_case1(self):
         bedFile = pd.read_csv("testFiles/testSmall.bed", sep="\t")
-        result = HT.assignRegions(window=500000, binsize=50000,
-                                  chroms=bedFile["chrom"],
-                                  positions=bedFile["pos"],
-                                  arms=self.arms)
+        result = HT.assignRegions(
+            window=500000,
+            binsize=50000,
+            chroms=bedFile["chrom"],
+            positions=bedFile["pos"],
+            arms=self.arms,
+        )
         expected = pd.read_csv("testFiles/testAssignRegions.csv")
         assert_frame_equal(result, expected)
 
     def test_case2(self):
         bedFile = pd.read_csv("testFiles/testSmall_2.bed", sep="\t")
-        result = HT.assignRegions(window=500000, binsize=50000,
-                                  chroms=bedFile["chrom"],
-                                  positions=bedFile["pos"],
-                                  arms=self.arms)
+        result = HT.assignRegions(
+            window=500000,
+            binsize=50000,
+            chroms=bedFile["chrom"],
+            positions=bedFile["pos"],
+            arms=self.arms,
+        )
         expected = pd.read_csv("testFiles/testAssignRegions_2.csv")
         assert_frame_equal(result, expected)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     res = unittest.main(verbosity=3, exit=False)
 
