@@ -271,7 +271,9 @@ class TestPairingScore(unittest.TestCase):
         pairingScore = HT.getPairingScore(
             c, 50000, regions=positionFrame, arms=arms, norm=False, blankDiag=False
         )
-        expected = pd.read_csv("testFiles/test_pairingScore_ICCF_specificRegions_withDiag.csv")
+        expected = pd.read_csv(
+            "testFiles/test_pairingScore_ICCF_specificRegions_withDiag.csv"
+        )
         assert_frame_equal(pairingScore, expected)
 
     def test_specificRegions_withoutDiag(self):  # Simulated cooler
@@ -282,19 +284,24 @@ class TestPairingScore(unittest.TestCase):
         pairingScore = HT.getPairingScore(
             c, 50000, regions=positionFrame, arms=arms, norm=False, blankDiag=True
         )
-        expected = pd.read_csv("testFiles/test_pairingScore_ICCF_specificRegions_withoutDiag.csv")
+        expected = pd.read_csv(
+            "testFiles/test_pairingScore_ICCF_specificRegions_withoutDiag.csv"
+        )
         assert_frame_equal(pairingScore, expected)
 
     def test_genomeWide_notNorm_withDiag(self):
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
         expF = pd.read_csv("testFiles/test_expected_chrSyn.csv")
-        pairingScore = HT.getPairingScore(c, 50000, arms=arms, norm=False, blankDiag=False)
+        pairingScore = HT.getPairingScore(
+            c, 50000, arms=arms, norm=False, blankDiag=False
+        )
         expected = pd.read_csv(
             "testFiles/test_pairingScore_ICCF_genomeWide_withDiag.csv",
             dtype={
                 name: pairingScore.dtypes[name] for name in pairingScore.dtypes.index
-            }, index_col=0
+            },
+            index_col=0,
         )
         assert_frame_equal(pairingScore, expected)
 
@@ -302,12 +309,15 @@ class TestPairingScore(unittest.TestCase):
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
         expF = pd.read_csv("testFiles/test_expected_chrSyn.csv")
-        pairingScore = HT.getPairingScore(c, 50000, arms=arms, norm=False, blankDiag=True)
+        pairingScore = HT.getPairingScore(
+            c, 50000, arms=arms, norm=False, blankDiag=True
+        )
         expected = pd.read_csv(
             "testFiles/test_pairingScore_ICCF_genomeWide_withoutDiag.csv",
             dtype={
                 name: pairingScore.dtypes[name] for name in pairingScore.dtypes.index
-            }, index_col=0
+            },
+            index_col=0,
         )
         assert_frame_equal(pairingScore, expected)
 
@@ -315,24 +325,30 @@ class TestPairingScore(unittest.TestCase):
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
         expF = pd.read_csv("testFiles/test_expected_chrSyn.csv")
-        pairingScore = HT.getPairingScore(c, 50000, arms=arms, norm=True, blankDiag=False)
+        pairingScore = HT.getPairingScore(
+            c, 50000, arms=arms, norm=True, blankDiag=False
+        )
         expected = pd.read_csv(
             "testFiles/test_pairingScore_ICCF_genomeWide_withDiag_norm.csv",
             dtype={
                 name: pairingScore.dtypes[name] for name in pairingScore.dtypes.index
-            }, index_col=0
+            },
+            index_col=0,
         )
         assert_frame_equal(pairingScore, expected)
 
     def test_genomeWide_norm_withoutDiag(self):
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        pairingScore = HT.getPairingScore(c, 50000, arms=arms, norm=True, blankDiag=True)
+        pairingScore = HT.getPairingScore(
+            c, 50000, arms=arms, norm=True, blankDiag=True
+        )
         expected = pd.read_csv(
             "testFiles/test_pairingScore_ICCF_genomeWide_withoutDiag_norm.csv",
             dtype={
                 name: pairingScore.dtypes[name] for name in pairingScore.dtypes.index
-            }, index_col=0
+            },
+            index_col=0,
         )
         assert_frame_equal(pairingScore, expected)
 
@@ -341,16 +357,14 @@ class TestPairingScore(unittest.TestCase):
         positionFrame = pd.read_csv("testFiles/posPileups.csv")
         positionFrame.loc[:, "mid"] = positionFrame["pos"]
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        pairingScore = HT.getPairingScore(c, 50000, arms=arms, norm=True, blankDiag=True)
+        pairingScore = HT.getPairingScore(
+            c, 50000, arms=arms, norm=True, blankDiag=True
+        )
         badCall = partial(
-            HT.getPairingScore,
-            c,
-            50000,
-            regions=positionFrame,
-            arms=arms,
-            norm=True,
+            HT.getPairingScore, c, 50000, regions=positionFrame, arms=arms, norm=True,
         )
         self.assertRaises(ValueError, badCall)
+
 
 if __name__ == "__main__":
     res = unittest.main(verbosity=3, exit=False)
