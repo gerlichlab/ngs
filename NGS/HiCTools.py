@@ -362,6 +362,9 @@ def getPairingScore(
         regions = clr.bins()[:].dropna()
         # find midpoint of each bin to assign windows to each midpoint
         regions.loc[:, "mid"] = (regions["start"] + regions["end"]) // 2
+    # check that norm is only set if genomewide pairingScore is calculated
+    elif norm:
+        raise ValueError("Norm flag can only be set with genomeWide pairingScore!")
     # drop nan rows from regions
     regions = regions.dropna()
     # fix indices
@@ -426,6 +429,9 @@ def getPairingScoreObsExp(
         regions = clr.bins()[:].dropna()
         # find midpoint of each bin to assign windows to each midpoint
         regions.loc[:, "mid"] = (regions["start"] + regions["end"]) // 2
+    # check that norm is only set if genomewide pairingScore is calculated
+    elif norm:
+        raise ValueError("Norm flag can only be set with genomeWide pairingScore!")
     # drop nan rows from regions
     regions = regions.dropna()
     # fix indices
