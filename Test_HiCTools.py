@@ -202,6 +202,20 @@ class TestPileupObsExp(unittest.TestCase):
         self.assertTrue(np.allclose(result, expected))
 
 
+class TestPairingScoreObsExp(unittest.TestCase):
+    def test_specificRegions(self):  # Simulated cooler
+        positionFrame = pd.read_csv("testFiles/posPileups.csv")
+        positionFrame.loc[:, "mid"] = positionFrame["pos"]
+        arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
+        c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
+        expF = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        pairingScore = HT.getPairingScoreObsExp(
+            c, expF, 50000, regions=positionFrame, arms=arms, norm=False
+        )
+        expected = pd.read_csv("testFiles/test_pairingScore_obsExp_specificRegions.csv")
+        assert_frame_equal(pairingScore, expected)
+
+
 if __name__ == "__main__":
     res = unittest.main(verbosity=3, exit=False)
 
