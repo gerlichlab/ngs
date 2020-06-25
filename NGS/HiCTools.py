@@ -101,7 +101,7 @@ def assignRegions2d(window: int, binsize: int, chroms1: pd.Series,
     assigned will be pos-window until pos+window. The binsize specifies the size
     of the HiC bins. The positions which represent the center of the regions
     is given by  the chroms1 and chroms2 series as well as the
-    positions1 and positions2 sereis."""
+    positions1 and positions2 series."""
     # construct windows from the passed chromosomes 1 and positions 1
     windows1 = assignRegions(window, binsize, chroms1, positions1, arms)
     windows1.columns = [str(i) + "1" for i in windows1.columns]
@@ -137,7 +137,7 @@ def doPileupObsExp(clr: cooler.Cooler, expected_df: pd.DataFrame,
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
         with multiprocess.Pool(proc) as pool:
-            # extract a matrix of obs/exp avlues for each snipping_window
+            # extract a matrix of obs/exp average values for each snipping_window
             oe_pile = cooltools.snipping.pileup(
                 snipping_windows,
                 oe_snipper.select, oe_snipper.snip,
@@ -178,7 +178,7 @@ def doPileupICCF(clr: cooler.Cooler, snipping_windows: pd.DataFrame,
 
 
 def slidingDiamond(array: np.ndarray, sideLen: int = 6, centerX: bool = True) -> Tuple[np.ndarray, np.ndarray]:
-    """Will slide a dimaond of side length 'sideLen'
+    """Will slide a diamond of side length 'sideLen'
     down the diagonal of the passed array and return
     the average values for each position and
     the relative position of each value with respect
@@ -262,7 +262,7 @@ def pileToFrame(pile: np.ndarray) -> pd.DataFrame:
     """Takes a pile of pileup windows produced
     by doPileupsObsExp/doPileupsICCF (with collapse set to False;
     this is numpy ndarray with the following dimensions:
-    pile.shape = [windoSize, windowSize, windowNumber])
+    pile.shape = [windowSize, windowSize, windowNumber])
     and arranges them as a dataframe with the pixels of the
     pile flattened into columns and each individual window
     being a row.
@@ -301,7 +301,7 @@ def getPairingScore(clr: cooler.Cooler, windowsize: int = 4 * 10**4,
     returned as a dataframe. If no regions are supplied, regions
     are constructed for each bin in the cooler file to
     construct a genome-wide pairing score. Norm refers to whether the median of the
-    calculated pairing score should be subtracted from the supplied vlaues and blankDiga
+    calculated pairing score should be subtracted from the supplied values and blankDiag
     refers to whether the diagonal should be blanked before calculating pairing score."""
     # Check whether genomic regions were supplied
     if len(regions) == 0:
