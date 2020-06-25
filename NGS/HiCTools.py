@@ -342,6 +342,7 @@ def getPairingScore(
     regions: pd.DataFrame = pd.DataFrame(),
     norm: bool = True,
     blankDiag: bool = True,
+    arms: pd.DataFrame = pd.DataFrame(),
 ) -> pd.DataFrame:
     """Takes a cooler file (clr),
     a windowsize (windowsize), a summary
@@ -371,7 +372,8 @@ def getPairingScore(
     regions.index = range(len(regions))
     regions.loc[:, "binID"] = range(len(regions))
     # Chromosomal arms are needed so each process only extracts a subset from the file
-    arms = getArmsHg19()
+    if len(arms) == 0:
+        arms = getArmsHg19()
     # extract all windows
     windows = assignRegions(
         windowsize, clr.binsize, regions["chrom"], regions["mid"], arms
