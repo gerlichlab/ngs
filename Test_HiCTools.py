@@ -102,6 +102,14 @@ class TestGetExpected(unittest.TestCase):
         check = pd.read_csv("testFiles/test_expected_chrSyn.csv")
         assert_frame_equal(result, check)
 
+    def test_synthetic_data_multChroms(self):
+        arms = pd.DataFrame({"chrom": ["chrSyn", "chrSyn"],
+                             "start": [0, 2000000],
+                             "end": [2000000, 4990000]})
+        result = HT.getExpected(self.cooler, arms, proc=1, ignoreDiagonals=0)
+        check = pd.read_csv("testFiles/test_expected_multiple_chroms.csv")
+        assert_frame_equal(result, check)
+
 
 class TestAssignRegions(unittest.TestCase):
     def setUp(self):
