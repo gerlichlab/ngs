@@ -12,7 +12,7 @@ import cooltools
 
 
 def generate2dGauss(mean, variance, gridsize=10, spacing=0.2):
-    """Helper function to create 2d-Gaussian for use in 
+    """Helper function to create 2d-Gaussian for use in
     sliding diamond testing."""
     # define grid
     x, y = np.mgrid[-gridsize:gridsize:spacing, -gridsize:gridsize:spacing]
@@ -60,7 +60,7 @@ class TestSlidingDiamond(unittest.TestCase):
         )
 
     def testCenterEnrichment(self):
-        """Tests center enrichment of sliding diamond 
+        """Tests center enrichment of sliding diamond
         of a synthetically generated gaussian."""
         x, y = HT.slidingDiamond(self.gaussian, sideLen=6)
         centerMean = np.mean(y[np.where(np.abs(x) < 1)])
@@ -430,7 +430,7 @@ class TestPairingScore(unittest.TestCase):
 
     def test_wrongParameters(self):
         """Tests raising of error when specific
-        region pileup is done with the norm 
+        region pileup is done with the norm
         parameter set to True."""
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         positionFrame = pd.read_csv("testFiles/posPileups.csv")
