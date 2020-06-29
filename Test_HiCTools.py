@@ -5,8 +5,8 @@ from pandas.testing import assert_frame_equal
 import numpy as np
 from scipy.stats import multivariate_normal
 import cooler
-from pandas.testing import assert_frame_equal
 from functools import partial
+import cooltools
 
 # define functions
 
@@ -93,7 +93,7 @@ class TestSlidingDiamond(unittest.TestCase):
 class TestGetExpected(unittest.TestCase):
     def setUp(self):
         self.cooler = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        self.arms= pd.DataFrame(
+        self.arms = pd.DataFrame(
             {"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0]
         )
 
@@ -103,22 +103,25 @@ class TestGetExpected(unittest.TestCase):
         assert_frame_equal(result, check)
 
     def test_synthetic_data_multChroms(self):
-        arms = pd.DataFrame({"chrom": ["chrSyn", "chrSyn"],
-                             "start": [0, 2000000],
-                             "end": [2000000, 4990000]})
+        arms = pd.DataFrame(
+            {
+                "chrom": ["chrSyn", "chrSyn"],
+                "start": [0, 2000000],
+                "end": [2000000, 4990000],
+            }
+        )
         result = HT.getExpected(self.cooler, arms, proc=1, ignoreDiagonals=0)
         check = pd.read_csv("testFiles/test_expected_multiple_chroms.csv")
         assert_frame_equal(result, check)
 
-    #def test_expected_realData(self):
-    #    arms = HT.getArmsHg19()
-    #    c = cooler.Cooler("testFiles/test3_realdata.mcool::/resolutions/50000")
-    #    result = HT.getExpected(c, arms, proc=1, ignoreDiagonals=0)
-    #    resultSorted = result.sort_values(by=["chrom", "start"]).drop(columns="count.sum")
-    #    check = pd.read_csv("testFiles/test_expected_realdata.csv")
-    #    assert_frame_equal(resultSorted, check)
-
-
+    @unittest.skipIf(cooltools.__version__ == "0.2.0", "bug in the old cooltools version")
+    def test_expected_realData(self):
+        arms = HT.getArmsHg19()
+        c = cooler.Cooler("testFiles/test3_realdata.mcool::/resolutions/50000")
+        result = HT.getExpected(c, arms, proc=1, ignoreDiagonals=0)
+        resultSorted = result.sort_values(by=["chrom", "start"]).drop(columns="count.sum")
+        check = pd.read_csv("testFiles/test_expected_realdata.csv")
+        assert_frame_equal(resultSorted, check)
 
 
 class TestAssignRegions(unittest.TestCase):
@@ -369,4 +372,3 @@ class TestPairingScore(unittest.TestCase):
 
 if __name__ == "__main__":
     res = unittest.main(verbosity=3, exit=False)
-
