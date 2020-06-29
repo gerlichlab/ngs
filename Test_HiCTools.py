@@ -12,6 +12,8 @@ import cooltools
 
 
 def generate2dGauss(mean, variance, gridsize=10, spacing=0.2):
+    """Helper function to create 2d-Gaussian for use in 
+    sliding diamond testing."""
     # define grid
     x, y = np.mgrid[-gridsize:gridsize:spacing, -gridsize:gridsize:spacing]
     # get position vector
@@ -26,14 +28,22 @@ def generate2dGauss(mean, variance, gridsize=10, spacing=0.2):
 
 # define tests
 class TestResources(unittest.TestCase):
+    """Test whether resources accessed by bioframe are available
+    and have not changed."""
+
     def testArms(self):
+        """Tests whether fetching and generating
+        of supports for chromosomal arms of hg19 works."""
         check = pd.read_csv("./testFiles/arms.csv")
         arms = HT.getArmsHg19()
         assert_frame_equal(check, arms)
 
 
 class TestSlidingDiamond(unittest.TestCase):
+    """Tests for sliding diamond function."""
+
     def setUp(self):
+        """Setting up common resources."""
         self.gaussian = generate2dGauss(
             mean=[0, 0], variance=[[3, 0], [0, 3]], gridsize=15
         )
@@ -50,14 +60,16 @@ class TestSlidingDiamond(unittest.TestCase):
         )
 
     def testCenterEnrichment(self):
-        """Tests center enrichment of sliding diamond"""
+        """Tests center enrichment of sliding diamond 
+        of a synthetically generated gaussian."""
         x, y = HT.slidingDiamond(self.gaussian, sideLen=6)
         centerMean = np.mean(y[np.where(np.abs(x) < 1)])
         borderMean = np.mean(y[:5])
         self.assertTrue(centerMean > 5 * borderMean)
 
     def testEvenDiamond(self):
-        """Tests sliding a diamond of even sidelength"""
+        """Tests sliding a diamond of even sidelength
+        for small fixed matrix."""
         x, y = HT.slidingDiamond(self.testMatrix, sideLen=2, centerX=False)
         xCheck = np.array([0.5, 1.5, 2.5, 3.5, 4.5])
         yCheck = np.array([3.5, 4.75, 4.75, 3.25, 2.0])
@@ -66,7 +78,8 @@ class TestSlidingDiamond(unittest.TestCase):
 
     def testEvenDiamondXNorm(self):
         """Tests sliding a diamond of even sidelength
-        with x normalization"""
+        with x normalization (center is set to 0) for
+        small fixed matrix.."""
         x, y = HT.slidingDiamond(self.testMatrix, sideLen=2, centerX=True)
         xCheck = np.array([-2, -1, 0, 1, 2])
         yCheck = np.array([3.5, 4.75, 4.75, 3.25, 2.0])
@@ -74,7 +87,8 @@ class TestSlidingDiamond(unittest.TestCase):
         self.assertTrue(all(np.isclose(y, yCheck)))
 
     def testOddDiamond(self):
-        """Tests sliding a diamond of even sidelength"""
+        """Tests sliding a diamond of odd sidelength
+        for small fixed matrix."""
         x, y = HT.slidingDiamond(self.testMatrix, sideLen=3, centerX=False)
         xCheck = np.array([1, 2, 3, 4])
         yCheck = np.array([3.666666666, 4.11111111, 4.77777777, 2.55555555])
@@ -82,7 +96,8 @@ class TestSlidingDiamond(unittest.TestCase):
         self.assertTrue(all(np.isclose(y, yCheck)))
 
     def testOddDiamondXNorm(self):
-        """Tests sliding a diamond of even sidelength"""
+        """Tests sliding a diamond of odd sidelength
+        with x normalization for small fixed matrix."""
         x, y = HT.slidingDiamond(self.testMatrix, sideLen=3, centerX=True)
         xCheck = np.array([-1.5, -0.5, 0.5, 1.5])
         yCheck = np.array([3.666666666, 4.11111111, 4.77777777, 2.55555555])
@@ -91,18 +106,29 @@ class TestSlidingDiamond(unittest.TestCase):
 
 
 class TestGetExpected(unittest.TestCase):
+    """Tests for getting expected diagonal counts from
+    a Hi-C matrix."""
+
     def setUp(self):
+        """Setting up common resources"""
         self.cooler = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
         self.arms = pd.DataFrame(
             {"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0]
         )
 
-    def test_synthetic_data(self):  # calculated by hand
+    def test_synthetic_data(self):
+        """Tests expected counts for synthetic Hi-C data.
+        Known values were provided and expected counts for each diagonal
+        calculated."""
         result = HT.getExpected(self.cooler, self.arms, proc=1, ignoreDiagonals=0)
         check = pd.read_csv("testFiles/test_expected_chrSyn.csv")
         assert_frame_equal(result, check)
 
     def test_synthetic_data_multChroms(self):
+        """Tests expected counts for synthetic Hi-C data
+        with multiple chromosomal arms. Known values were
+        provided and expected counts for each diagonal
+        calculated."""
         arms = pd.DataFrame(
             {
                 "chrom": ["chrSyn", "chrSyn"],
@@ -114,21 +140,34 @@ class TestGetExpected(unittest.TestCase):
         check = pd.read_csv("testFiles/test_expected_multiple_chroms.csv")
         assert_frame_equal(result, check)
 
-    @unittest.skipIf(cooltools.__version__ == "0.2.0", "bug in the old cooltools version")
+    @unittest.skipIf(
+        cooltools.__version__ == "0.2.0", "bug in the old cooltools version"
+    )
     def test_expected_realData(self):
+        """Tests expected counts for real Hi-C data
+        with multiple chromosomal arms. Known values were
+        provided and expected counts for each diagonal
+        calculated."""
         arms = HT.getArmsHg19()
         c = cooler.Cooler("testFiles/test3_realdata.mcool::/resolutions/50000")
         result = HT.getExpected(c, arms, proc=1, ignoreDiagonals=0)
-        resultSorted = result.sort_values(by=["chrom", "start"]).drop(columns="count.sum")
+        resultSorted = result.sort_values(by=["chrom", "start"]).drop(
+            columns="count.sum"
+        )
         check = pd.read_csv("testFiles/test_expected_realdata.csv")
         assert_frame_equal(resultSorted, check)
 
 
 class TestAssignRegions(unittest.TestCase):
+    """Tests assigning of chromosomal positions
+    to Hi-C bins and chromosomal supports."""
+
     def setUp(self):
+        """Setting up common resources"""
         self.arms = pd.read_csv("testFiles/arms.csv")
 
     def test_case1(self):
+        """Test assignment of small, synthetic set of regions."""
         bedFile = pd.read_csv("testFiles/testSmall.bed", sep="\t")
         result = HT.assignRegions(
             window=500000,
@@ -141,6 +180,8 @@ class TestAssignRegions(unittest.TestCase):
         assert_frame_equal(result, expected)
 
     def test_case2(self):
+        """Test assignment of a different small,
+        synthetic set of regions."""
         bedFile = pd.read_csv("testFiles/testSmall_2.bed", sep="\t")
         result = HT.assignRegions(
             window=500000,
@@ -154,9 +195,10 @@ class TestAssignRegions(unittest.TestCase):
 
 
 class TestPileupICCF(unittest.TestCase):
-    def test_no_collapse(self):  # Simulated cooler
-        """tests extracting individual windows
-        without averaging."""
+    """Tests pileup of iteratively corrected counts (ICCF)"""
+
+    def test_no_collapse(self):
+        """Tests pileup of synthetic Hi-C data, without collapsing results."""
         positionFrame = pd.read_csv("testFiles/posPileups.csv")
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         assigned = HT.assignRegions(
@@ -167,7 +209,8 @@ class TestPileupICCF(unittest.TestCase):
         expected = np.load("testFiles/test_pileups_iccf_noCollapse.npy")
         self.assertTrue(np.allclose(result, expected))
 
-    def test_collapse(self):  # Simulated cooler
+    def test_collapse(self):
+        """Tests pileup of synthetic Hi-C data, with collapsing results."""
         positionFrame = pd.read_csv("testFiles/posPileups.csv")
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         assigned = HT.assignRegions(
@@ -180,9 +223,10 @@ class TestPileupICCF(unittest.TestCase):
 
 
 class TestPileupObsExp(unittest.TestCase):
-    def test_no_collapse(self):  # Simulated cooler
-        """tests extracting individual windows
-        without averaging."""
+    """Tests pileup of Obs/Exp values."""
+
+    def test_no_collapse(self):
+        """Tests pileup of synthetic Hi-C data, without collapsing results."""
         positionFrame = pd.read_csv("testFiles/posPileups.csv")
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         assigned = HT.assignRegions(
@@ -194,7 +238,8 @@ class TestPileupObsExp(unittest.TestCase):
         expected = np.load("testFiles/test_pileups_obsExp_noCollapse.npy")
         self.assertTrue(np.allclose(result, expected))
 
-    def test_collapse(self):  # Simulated cooler
+    def test_collapse(self):
+        """Tests pileup of synthetic Hi-C data, with collapsing results."""
         positionFrame = pd.read_csv("testFiles/posPileups.csv")
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         assigned = HT.assignRegions(
@@ -208,7 +253,11 @@ class TestPileupObsExp(unittest.TestCase):
 
 
 class TestPairingScoreObsExp(unittest.TestCase):
-    def test_specificRegions(self):  # Simulated cooler
+    """Tests for extracting Obs/Exp pairing score"""
+
+    def test_specificRegions(self):
+        """Tests functionality to extract Obs/Exp values
+        at specific regions from synthetic Hi-C data."""
         positionFrame = pd.read_csv("testFiles/posPileups.csv")
         positionFrame.loc[:, "mid"] = positionFrame["pos"]
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
@@ -221,6 +270,8 @@ class TestPairingScoreObsExp(unittest.TestCase):
         assert_frame_equal(pairingScore, expected)
 
     def test_genomeWide_notNorm(self):
+        """Tests functionality to extract Obs/Exp values
+        genome-wide without median normalization from synthetic Hi-C data."""
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
         expF = pd.read_csv("testFiles/test_expected_chrSyn.csv")
@@ -234,6 +285,8 @@ class TestPairingScoreObsExp(unittest.TestCase):
         assert_frame_equal(pairingScore, expected)
 
     def test_genomeWide_norm(self):
+        """Tests functionality to extract Obs/Exp values
+        genome-wide with median normalization from synthetic Hi-C data."""
         positionFrame = pd.read_csv("testFiles/posPileups.csv")
         positionFrame.loc[:, "mid"] = positionFrame["pos"]
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
@@ -249,6 +302,8 @@ class TestPairingScoreObsExp(unittest.TestCase):
         assert_frame_equal(pairingScore, expected)
 
     def test_wrongParameters(self):
+        """Tests raising of error when specific
+        region pileup is done with the norm parameter set to True."""
         positionFrame = pd.read_csv("testFiles/posPileups.csv")
         positionFrame.loc[:, "mid"] = positionFrame["pos"]
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
@@ -267,7 +322,12 @@ class TestPairingScoreObsExp(unittest.TestCase):
 
 
 class TestPairingScore(unittest.TestCase):
-    def test_specificRegions_withDiag(self):  # Simulated cooler
+    """Tests for extracting ICCF pairing score"""
+
+    def test_specificRegions_withDiag(self):
+        """Tests functionality to extract ICCF values
+        at specific regions from synthetic Hi-C data
+        without blanking the main diagonal."""
         positionFrame = pd.read_csv("testFiles/posPileups.csv")
         positionFrame.loc[:, "mid"] = positionFrame["pos"]
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
@@ -281,6 +341,9 @@ class TestPairingScore(unittest.TestCase):
         assert_frame_equal(pairingScore, expected)
 
     def test_specificRegions_withoutDiag(self):  # Simulated cooler
+        """Tests functionality to extract ICCF values
+        at specific regions from synthetic Hi-C data
+        with blanking the main diagonal."""
         positionFrame = pd.read_csv("testFiles/posPileups.csv")
         positionFrame.loc[:, "mid"] = positionFrame["pos"]
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
@@ -294,6 +357,9 @@ class TestPairingScore(unittest.TestCase):
         assert_frame_equal(pairingScore, expected)
 
     def test_genomeWide_notNorm_withDiag(self):
+        """Tests functionality to extract ICCF values
+        genome-wide without median normalization from synthetic Hi-C data
+        without blanking the main diagonal."""
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
         pairingScore = HT.getPairingScore(
@@ -309,6 +375,9 @@ class TestPairingScore(unittest.TestCase):
         assert_frame_equal(pairingScore, expected)
 
     def test_genomeWide_notNorm_withoutDiag(self):
+        """Tests functionality to extract ICCF values
+        genome-wide without median normalization from synthetic Hi-C data
+        with blanking the main diagonal."""
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
         pairingScore = HT.getPairingScore(
@@ -324,6 +393,9 @@ class TestPairingScore(unittest.TestCase):
         assert_frame_equal(pairingScore, expected)
 
     def test_genomeWide_norm_withDiag(self):
+        """Tests functionality to extract ICCF values
+        genome-wide with median normalization from synthetic Hi-C data
+        without blanking the main diagonal."""
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
         pairingScore = HT.getPairingScore(
@@ -339,6 +411,9 @@ class TestPairingScore(unittest.TestCase):
         assert_frame_equal(pairingScore, expected)
 
     def test_genomeWide_norm_withoutDiag(self):
+        """Tests functionality to extract ICCF values
+        genome-wide with median normalization from synthetic Hi-C data
+        with blanking the main diagonal."""
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
         pairingScore = HT.getPairingScore(
@@ -354,6 +429,9 @@ class TestPairingScore(unittest.TestCase):
         assert_frame_equal(pairingScore, expected)
 
     def test_wrongParameters(self):
+        """Tests raising of error when specific
+        region pileup is done with the norm 
+        parameter set to True."""
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         positionFrame = pd.read_csv("testFiles/posPileups.csv")
         positionFrame.loc[:, "mid"] = positionFrame["pos"]
