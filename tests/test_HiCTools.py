@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from NGS import HiCTools as HT
+from ngs import HiCTools as HT
 from pandas.testing import assert_frame_equal
 import numpy as np
 from scipy.stats import multivariate_normal
