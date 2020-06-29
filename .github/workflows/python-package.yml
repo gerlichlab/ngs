@@ -19,9 +19,9 @@ jobs:
           python-version: [3.7]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@test
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@test
       with:
         python-version: ${{ matrix.python-version }}
     - name: Test if cooler_ontad runs, to check if environment is active

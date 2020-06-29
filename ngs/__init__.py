@@ -1,1 +1,1 @@
-name = "NGS-0.1"
+name = "ngs-0.1"

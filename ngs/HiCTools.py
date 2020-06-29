@@ -1,17 +1,16 @@
 """A collections of functions to facilitate
 analysis of HiC data based on the cooler and cooltools
 interfaces."""
-import multiprocess
+import warnings
+from typing import Tuple, Dict, Callable
 import cooltools.expected
 import cooltools.snipping
 import pandas as pd
 import bioframe
 import cooler
-import warnings
 import pairtools
-from typing import Tuple, Dict, Callable
 import numpy as np
-
+import multiprocess
 
 # define type aliases
 
@@ -418,7 +417,7 @@ def getPairingScoreObsExp(
     a windowsize (windowsize), a summary
     function (func) and a set of genomic
     regions to calculate the pairing score
-    as follows: A square with side-length windowsize 
+    as follows: A square with side-length windowsize
     is created for each of the entries in the supplied genomics
     regions and the summary function applied to the Hi-C pixels (obs/exp values)
     at the location in the supplied cooler file. The results are
