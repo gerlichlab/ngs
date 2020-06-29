@@ -1,0 +1,8 @@
+multiprocess
+cython
+cooltools
+pandas
+bioframe
+cooler
+pairtools
+numpy
