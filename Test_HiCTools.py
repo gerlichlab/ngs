@@ -296,7 +296,6 @@ class TestPairingScore(unittest.TestCase):
     def test_genomeWide_notNorm_withDiag(self):
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        expF = pd.read_csv("testFiles/test_expected_chrSyn.csv")
         pairingScore = HT.getPairingScore(
             c, 50000, arms=arms, norm=False, blankDiag=False
         )
@@ -312,7 +311,6 @@ class TestPairingScore(unittest.TestCase):
     def test_genomeWide_notNorm_withoutDiag(self):
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        expF = pd.read_csv("testFiles/test_expected_chrSyn.csv")
         pairingScore = HT.getPairingScore(
             c, 50000, arms=arms, norm=False, blankDiag=True
         )
@@ -328,7 +326,6 @@ class TestPairingScore(unittest.TestCase):
     def test_genomeWide_norm_withDiag(self):
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        expF = pd.read_csv("testFiles/test_expected_chrSyn.csv")
         pairingScore = HT.getPairingScore(
             c, 50000, arms=arms, norm=True, blankDiag=False
         )
@@ -361,9 +358,6 @@ class TestPairingScore(unittest.TestCase):
         positionFrame = pd.read_csv("testFiles/posPileups.csv")
         positionFrame.loc[:, "mid"] = positionFrame["pos"]
         c = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        pairingScore = HT.getPairingScore(
-            c, 50000, arms=arms, norm=True, blankDiag=True
-        )
         badCall = partial(
             HT.getPairingScore, c, 50000, regions=positionFrame, arms=arms, norm=True,
         )
