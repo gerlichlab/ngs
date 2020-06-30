@@ -1,3 +1,5 @@
+![Python package](https://github.com/gerlichlab/ngs/workflows/Python%20package/badge.svg)
+
 # Installation
 
 NGS can be installed using pip from this repository as follows:
