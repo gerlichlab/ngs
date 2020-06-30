@@ -2,6 +2,8 @@ multiprocess
 cooltools
 pandas
 bioframe
+numpy
+cython
 cooler
 pairtools
 numpy
