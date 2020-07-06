@@ -1,1 +1,1 @@
-name = "ngs-0.1"
+"""Init for ngs"""
