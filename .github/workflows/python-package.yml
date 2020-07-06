@@ -28,7 +28,6 @@ jobs:
     - name: Run pylint
       run: |
         pylint --disable=C0330 --fail-under=8 ngs/
-        pylint --disable=C0330 --fail-under=8 test/
     - name: Check code complexity
       run: |
         pylama --linters mccabe
