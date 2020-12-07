@@ -484,3 +484,23 @@ def extract_windows_different_sizes_iccf(regions, arms, cooler_file, processes=2
             snipping_windows, iccf_snipper.select, iccf_snipper.snip, mapper=pool.map
         )
     return result
+
+
+def extract_windows_different_sizes_obs_exp(
+    regions, arms, cooler_file, expected_df, processes=2
+):
+    """For extraction of a collection of regions that span genomic regions .
+    regions -> data_frame with chrom, start, end (start, end in genomic coordinates)
+    cooler -> opened cooler file
+    arms  -> chromosomal arms
+    """
+    # assign arms to regions
+    snipping_windows = cooltools.snipping.assign_regions(
+        regions, list(arms.itertuples(index=False, name=None))
+    ).dropna()
+    oe_snipper = cooltools.snipping.ObsExpSnipper(cooler_file, expected_df)
+    with multiprocess.Pool(processes) as pool:
+        result = flexible_pileup(
+            snipping_windows, oe_snipper.select, oe_snipper.snip, mapper=pool.map
+        )
+    return result
