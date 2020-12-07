@@ -2,7 +2,6 @@
 analysis of HiC data based on the cooler and cooltools
 interfaces."""
 import warnings
-import multiprocessing
 from typing import Tuple, Dict, Callable
 import cooltools.expected
 import cooltools.snipping
@@ -11,6 +10,7 @@ import bioframe
 import cooler
 import pairtools
 import numpy as np
+import multiprocess
 from .snipping_lib import flexible_pileup
 
 # define type aliases
@@ -31,7 +31,7 @@ def get_expected(
     to do the calculations. ingore_diags specifies how many diagonals
     to ignore (0 mains the main diagonal, 1 means the main diagonal
     and the flanking tow diagonals and so on)"""
-    with multiprocessing.Pool(proc) as pool:
+    with multiprocess.Pool(proc) as pool:
         expected = cooltools.expected.diagsum(
             clr,
             tuple(arms.itertuples(index=False, name=None)),
@@ -168,7 +168,7 @@ def do_pileup_obs_exp(
     # the expected dataframe
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
-        with multiprocessing.Pool(proc) as pool:
+        with multiprocess.Pool(proc) as pool:
             # extract a matrix of obs/exp average values for each snipping_window
             oe_pile = cooltools.snipping.pileup(
                 snipping_windows, oe_snipper.select, oe_snipper.snip, map=pool.map
@@ -194,7 +194,7 @@ def do_pileup_iccf(
     the average window over all piles (collapse=True), or the individual
     windows (collapse=False)."""
     iccf_snipper = cooltools.snipping.CoolerSnipper(clr)
-    with multiprocessing.Pool(proc) as pool:
+    with multiprocess.Pool(proc) as pool:
         iccf_pile = cooltools.snipping.pileup(
             snipping_windows, iccf_snipper.select, iccf_snipper.snip, map=pool.map
         )
@@ -479,7 +479,7 @@ def extract_windows_different_sizes_iccf(regions, arms, cooler_file, processes=2
         regions, list(arms.itertuples(index=False, name=None))
     ).dropna()
     iccf_snipper = cooltools.snipping.CoolerSnipper(cooler_file)
-    with multiprocessing.Pool(processes) as pool:
+    with multiprocess.Pool(processes) as pool:
         result = flexible_pileup(
             snipping_windows, iccf_snipper.select, iccf_snipper.snip, mapper=pool.map
         )
