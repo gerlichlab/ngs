@@ -22,9 +22,9 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Run black
-      run: |
-        black --check .
+    #- name: Run black
+    #  run: |
+    #    black --check .
     - name: Run pylint
       run: |
         pylint --disable=C0330 --fail-under=8 ngs/
