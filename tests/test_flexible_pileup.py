@@ -15,7 +15,9 @@ class TestFlexiblePileup(unittest.TestCase):
         position_frame = pd.read_csv("testFiles/posPileupSymmetric.csv")
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        result = HT.extract_windows_different_sizes_iccf(position_frame, arms, cooler_file)
+        result = HT.extract_windows_different_sizes_iccf(
+            position_frame, arms, cooler_file
+        )
         # load expected extracted windows
         with open("testFiles/test_pilesup_symmetric.pickle", "rb") as file_pointer:
             expected = pickle.load(file_pointer)
@@ -33,7 +35,9 @@ class TestFlexiblePileup(unittest.TestCase):
             }
         )
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        result = HT.extract_windows_different_sizes_iccf(position_frame, arms, cooler_file)
+        result = HT.extract_windows_different_sizes_iccf(
+            position_frame, arms, cooler_file
+        )
         # load expected extracted windows
         with open("testFiles/test_pilesup_symmetric.pickle", "rb") as file_pointer:
             expected = pickle.load(file_pointer)
@@ -44,7 +48,9 @@ class TestFlexiblePileup(unittest.TestCase):
         position_frame = pd.read_csv("testFiles/posPileupAsymmetric.csv")
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         cooler_file = cooler.Cooler("testFiles/test3.mcool::/resolutions/10000")
-        result = HT.extract_windows_different_sizes_iccf(position_frame, arms, cooler_file)
+        result = HT.extract_windows_different_sizes_iccf(
+            position_frame, arms, cooler_file
+        )
         # load expected extracted windows
         with open("testFiles/test_pilesup_asymmetric.pickle", "rb") as file_pointer:
             expected = pickle.load(file_pointer)
@@ -62,7 +68,9 @@ class TestFlexiblePileup(unittest.TestCase):
             }
         )
         cooler_file = cooler.Cooler("testFiles/test3.mcool::/resolutions/10000")
-        result = HT.extract_windows_different_sizes_iccf(position_frame, arms, cooler_file)
+        result = HT.extract_windows_different_sizes_iccf(
+            position_frame, arms, cooler_file
+        )
         # load expected extracted windows
         with open("testFiles/test_pilesup_asymmetric.pickle", "rb") as file_pointer:
             expected = pickle.load(file_pointer)
