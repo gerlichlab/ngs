@@ -225,14 +225,7 @@ def sliding_diamond(
             diamond_array[np.isinf(diamond_array)] = np.nan
             diamond_accumulator.append(np.nanmean(diamond_array))
             # append x-value for this particular bin
-            bin_accumulator.append(
-                np.median(
-                    range(
-                        i,
-                        (i + half_window),
-                    )
-                )
-            )
+            bin_accumulator.append(np.median(range(i, (i + half_window),)))
     else:
         half_window = side_len // 2
         for i in range(half_window, (array.shape[0] - half_window)):
@@ -246,12 +239,7 @@ def sliding_diamond(
             diamond_accumulator.append(np.nanmean(diamond_array))
             # append x-value for this particular bin
             bin_accumulator.append(
-                np.median(
-                    range(
-                        i - half_window,
-                        (i + half_window) + 1,
-                    )
-                )
+                np.median(range(i - half_window, (i + half_window) + 1,))
             )
     if center_x:
         x_out = np.array(bin_accumulator - np.median(bin_accumulator))
