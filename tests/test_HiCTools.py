@@ -162,9 +162,9 @@ class TestGetExpected(unittest.TestCase):
             "testFiles/test3_realdata.mcool::/resolutions/50000"
         )
         result = HT.get_expected(cooler_file, arms, proc=1, ignore_diagonals=0)
-        result_sorted = result.sort_values(by=["chrom", "start"]).drop(
+        result_sorted = result.sort_values(by=["chrom", "start", "end", "diag"]).drop(
             columns="count.sum"
-        )
+        ).reset_index(drop=True)
         check = pd.read_csv("testFiles/test_expected_realdata.csv")
         assert_frame_equal(result_sorted, check)
 

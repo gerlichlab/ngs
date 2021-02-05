@@ -53,9 +53,9 @@ def _flexible_pileup(data_select, data_snip, arg):
     support, feature_group = arg
     # check if support region is on- or off-diagonal
     if len(support) == 2:
-        region1, region2 = map(bioframe.parse_region_string, support)
+        region1, region2 = map(bioframe.region.parse_region_string, support)
     else:
-        region1 = region2 = bioframe.parse_region_string(support)
+        region1 = region2 = bioframe.region.parse_region_string(support)
     # check if features are on- or off-diagonal
     if "start" in feature_group:
         start_1 = feature_group["start"].values

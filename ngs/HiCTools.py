@@ -40,21 +40,18 @@ def get_expected(
             ignore_diags=ignore_diagonals,
         )
     # construct a single dataframe for all regions (arms)
-    expected_df = pd.concat(
-        [
-            exp.reset_index().assign(chrom=reg[0], start=reg[1], end=reg[2])
-            for reg, exp in expected.items()
-        ]
-    )
-    # aggregate diagonals over the regions specified by chrom, start, end (arms)
     expected_df = (
-        expected_df.groupby(["chrom", "start", "end", "diag"])
+        expected.groupby(["region", "diag"])
         .aggregate({"n_valid": "sum", "count.sum": "sum", "balanced.sum": "sum"})
         .reset_index()
     )
     # account for different number of valid bins in diagonals
     expected_df["balanced.avg"] = expected_df["balanced.sum"] / expected_df["n_valid"]
-    return expected_df
+    # parse region string
+    chrom, start, end = list(zip(*map(bioframe.region.parse_region_string, expected_df["region"])))
+    coordinate_frame = pd.DataFrame({"chrom": chrom, "start": start, "end":end})
+    final_frame = pd.concat((coordinate_frame, expected_df.drop("region", axis=1)), axis=1)
+    return final_frame
 
 
 def get_arms_hg19() -> pd.DataFrame:
