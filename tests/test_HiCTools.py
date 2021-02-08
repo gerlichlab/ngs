@@ -232,6 +232,23 @@ class TestPileupICCF(unittest.TestCase):
         expected = np.load("testFiles/test_pileups_iccf_collapse.npy")
         self.assertTrue(np.allclose(result, expected))
 
+    def test_collapse_real_data(self):
+        """tests whether pileup works on real data."""
+        positions = pd.read_csv("testFiles/testAssignRegions.csv")
+        arms = HT.get_arms_hg19()
+        cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
+        result = HT.do_pileup_iccf(cooler_file, positions, proc=1, collapse=True)
+        expected = np.load("testFiles/real_data_iccf_pileup_collapsed.npy")
+        self.assertTrue(np.allclose(result, expected))
+
+    def test_no_collapse_real_data(self):
+        positions = pd.read_csv("testFiles/testAssignRegions.csv")
+        arms = HT.get_arms_hg19()
+        cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
+        result = HT.do_pileup_iccf(cooler_file, positions, proc=1, collapse=False)
+        expected = np.load("testFiles/real_data_iccf_pileup_not_collapsed.npy")
+        self.assertTrue(np.allclose(result, expected, equal_nan=True))
+
 
 class TestPileupObsExp(unittest.TestCase):
     """Tests pileup of Obs/Exp values."""
@@ -265,6 +282,25 @@ class TestPileupObsExp(unittest.TestCase):
         )
         expected = np.load("testFiles/test_pileups_obsExp_collapse.npy")
         self.assertTrue(np.allclose(result, expected))
+
+    def test_collapse_real_data(self):
+        """tests whether pileup works on real data."""
+        positions = pd.read_csv("testFiles/testAssignRegions.csv")
+        arms = HT.get_arms_hg19()
+        cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
+        expected = HT.get_expected(cooler_file, arms)
+        result = HT.do_pileup_obs_exp(cooler_file, expected ,positions, proc=1, collapse=True)
+        expected = np.load("testFiles/real_data_obsexp_pileup_collapsed.npy")
+        self.assertTrue(np.allclose(result, expected))
+
+    def test_no_collapse_real_data(self):
+        positions = pd.read_csv("testFiles/testAssignRegions.csv")
+        arms = HT.get_arms_hg19()
+        cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
+        expected = HT.get_expected(cooler_file, arms)
+        result = HT.do_pileup_obs_exp(cooler_file,expected ,positions, proc=1, collapse=False)
+        expected = np.load("testFiles/real_data_obsexp_pileup_not_collapsed.npy")
+        self.assertTrue(np.allclose(result, expected, equal_nan=True))
 
 
 class TestPairingScoreObsExp(unittest.TestCase):
