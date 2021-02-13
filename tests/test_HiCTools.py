@@ -162,9 +162,11 @@ class TestGetExpected(unittest.TestCase):
             "testFiles/test3_realdata.mcool::/resolutions/50000"
         )
         result = HT.get_expected(cooler_file, arms, proc=1, ignore_diagonals=0)
-        result_sorted = result.sort_values(by=["chrom", "start", "end", "diag"]).drop(
-            columns="count.sum"
-        ).reset_index(drop=True)
+        result_sorted = (
+            result.sort_values(by=["chrom", "start", "end", "diag"])
+            .drop(columns="count.sum")
+            .reset_index(drop=True)
+        )
         check = pd.read_csv("testFiles/test_expected_realdata.csv")
         assert_frame_equal(result_sorted, check)
 
@@ -289,7 +291,9 @@ class TestPileupObsExp(unittest.TestCase):
         arms = HT.get_arms_hg19()
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
         expected = HT.get_expected(cooler_file, arms)
-        result = HT.do_pileup_obs_exp(cooler_file, expected ,positions, proc=1, collapse=True)
+        result = HT.do_pileup_obs_exp(
+            cooler_file, expected, positions, proc=1, collapse=True
+        )
         expected = np.load("testFiles/real_data_obsexp_pileup_collapsed.npy")
         self.assertTrue(np.allclose(result, expected))
 
@@ -298,7 +302,9 @@ class TestPileupObsExp(unittest.TestCase):
         arms = HT.get_arms_hg19()
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
         expected = HT.get_expected(cooler_file, arms)
-        result = HT.do_pileup_obs_exp(cooler_file,expected ,positions, proc=1, collapse=False)
+        result = HT.do_pileup_obs_exp(
+            cooler_file, expected, positions, proc=1, collapse=False
+        )
         expected = np.load("testFiles/real_data_obsexp_pileup_not_collapsed.npy")
         self.assertTrue(np.allclose(result, expected, equal_nan=True))
 
