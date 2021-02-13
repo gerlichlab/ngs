@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="ngs",
-    version="0.1",
+    version="0.2",
     author="Michael Mitter",
     author_email="michael_mitter@hotmail.com",
     description="Scripts for NGS analysis",
