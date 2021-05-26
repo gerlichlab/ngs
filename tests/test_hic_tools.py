@@ -236,7 +236,7 @@ class TestPileupICCF(unittest.TestCase):
         )
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
         result = HT.do_pileup_iccf(
-            cooler_file, assigned, proc=1, collapse=False, regions=arms
+            cooler_file, assigned, proc=1, collapse=False
         )
         expected = np.load("testFiles/test_pileups_iccf_noCollapse.npy")
         self.assertTrue(np.allclose(result, expected))
@@ -250,7 +250,7 @@ class TestPileupICCF(unittest.TestCase):
         )
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
         result = HT.do_pileup_iccf(
-            cooler_file, assigned, proc=1, collapse=True, regions=arms
+            cooler_file, assigned, proc=1, collapse=True
         )
         expected = np.load("testFiles/test_pileups_iccf_collapse.npy")
         self.assertTrue(np.allclose(result, expected))
@@ -258,20 +258,18 @@ class TestPileupICCF(unittest.TestCase):
     def test_collapse_real_data(self):
         """tests whether pileup works on real data."""
         positions = pd.read_csv("testFiles/testAssignRegions.csv")
-        arms = HT.get_arms_hg19()
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
         result = HT.do_pileup_iccf(
-            cooler_file, positions, proc=1, collapse=True, regions=arms
+            cooler_file, positions, proc=1, collapse=True
         )
         expected = np.load("testFiles/real_data_iccf_pileup_collapsed.npy")
         self.assertTrue(np.allclose(result, expected))
 
     def test_no_collapse_real_data(self):
         positions = pd.read_csv("testFiles/testAssignRegions.csv")
-        arms = HT.get_arms_hg19()
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
         result = HT.do_pileup_iccf(
-            cooler_file, positions, proc=1, collapse=False, regions=arms
+            cooler_file, positions, proc=1, collapse=False
         )
         expected = np.load("testFiles/real_data_iccf_pileup_not_collapsed.npy")
         self.assertTrue(np.allclose(result, expected, equal_nan=True))
@@ -290,7 +288,7 @@ class TestPileupObsExp(unittest.TestCase):
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
         exp_f = HT.get_expected(cooler_file, arms, ignore_diagonals=0)
         result = HT.do_pileup_obs_exp(
-            cooler_file, exp_f, assigned, proc=1, collapse=False, regions=arms
+            cooler_file, exp_f, assigned, proc=1, collapse=False
         )
         expected = np.load("testFiles/test_pileups_obsExp_noCollapse.npy")
         self.assertTrue(np.allclose(result, expected))
@@ -305,7 +303,7 @@ class TestPileupObsExp(unittest.TestCase):
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
         exp_f = HT.get_expected(cooler_file, arms, ignore_diagonals=0)
         result = HT.do_pileup_obs_exp(
-            cooler_file, exp_f, assigned, proc=1, collapse=True, regions=arms
+            cooler_file, exp_f, assigned, proc=1, collapse=True
         )
         expected = np.load("testFiles/test_pileups_obsExp_collapse.npy")
         self.assertTrue(np.allclose(result, expected))
@@ -317,7 +315,7 @@ class TestPileupObsExp(unittest.TestCase):
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
         expected = HT.get_expected(cooler_file, arms)
         result = HT.do_pileup_obs_exp(
-            cooler_file, expected, positions, proc=1, collapse=True, regions=arms
+            cooler_file, expected, positions, proc=1, collapse=True
         )
         expected = np.load("testFiles/real_data_obsexp_pileup_collapsed.npy")
         self.assertTrue(np.allclose(result, expected))
@@ -328,7 +326,7 @@ class TestPileupObsExp(unittest.TestCase):
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
         expected = HT.get_expected(cooler_file, arms)
         result = HT.do_pileup_obs_exp(
-            cooler_file, expected, positions, proc=1, collapse=False, regions=arms
+            cooler_file, expected, positions, proc=1, collapse=False
         )
         expected = np.load("testFiles/real_data_obsexp_pileup_not_collapsed.npy")
         self.assertTrue(np.allclose(result, expected, equal_nan=True))

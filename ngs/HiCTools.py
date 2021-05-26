@@ -144,7 +144,6 @@ def do_pileup_obs_exp(
     clr: cooler.Cooler,
     expected_df: pd.DataFrame,
     snipping_windows: pd.DataFrame,
-    regions: pd.DataFrame,
     proc: int = 5,
     collapse: bool = True,
 ) -> np.ndarray:
@@ -156,8 +155,9 @@ def do_pileup_obs_exp(
     The collapse parameter specifies whether to return
     the average window over all piles (collapse=True), or the individual
     windows (collapse=False)."""
+    region_frame = get_regions_from_snipping_windows(expected_df)
     oe_snipper = cooltools.snipping.ObsExpSnipper(
-        clr, expected_df, regions=bioframe.parse_regions(regions)
+        clr, expected_df, regions=bioframe.parse_regions(region_frame)
     )
     # set warnings filter to ignore RuntimeWarnings since cooltools
     # does not check whether there are inf or 0 values in
@@ -175,11 +175,9 @@ def do_pileup_obs_exp(
         return collapsed_pile
     return oe_pile
 
-
 def do_pileup_iccf(
     clr: cooler.Cooler,
     snipping_windows: pd.DataFrame,
-    regions: pd.DataFrame,
     proc: int = 5,
     collapse: bool = True,
 ) -> np.ndarray:
@@ -190,8 +188,10 @@ def do_pileup_iccf(
     parameter specifies whether to return
     the average window over all piles (collapse=True), or the individual
     windows (collapse=False)."""
+    # get regions from snipping windows
+    region_frame = get_regions_from_snipping_windows(snipping_windows)
     iccf_snipper = cooltools.snipping.CoolerSnipper(
-        clr, regions=bioframe.parse_regions(regions)
+        clr, regions=bioframe.parse_regions(region_frame)
     )
     with multiprocess.Pool(proc) as pool:
         iccf_pile = cooltools.snipping.pileup(
@@ -392,7 +392,7 @@ def get_pairing_score(
     windows.loc[:, "binID"] = regions["binID"]
     windows = windows.dropna()
     # generate pileup
-    pile = do_pileup_iccf(clr, windows, collapse=False, regions=arms)
+    pile = do_pileup_iccf(clr, windows, collapse=False)
     # convert to dataframe
     pile_frame = pile_to_frame(pile)
     if blank_diag:
@@ -460,7 +460,7 @@ def get_pairing_score_obs_exp(
     windows.loc[:, "binID"] = regions["binID"]
     windows = windows.dropna()
     # generate pileup
-    pile = do_pileup_obs_exp(clr, expected, windows, collapse=False, regions=arms)
+    pile = do_pileup_obs_exp(clr, expected, windows, collapse=False)
     # convert to dataframe
     pile_frame = pile_to_frame(pile)
     # replace inf with nan
@@ -519,3 +519,10 @@ def extract_windows_different_sizes_obs_exp(
             snipping_windows, oe_snipper.select, oe_snipper.snip, mapper=pool.map
         )
     return result
+
+
+def get_regions_from_snipping_windows(snipping_windows):
+    """Gets regions for use in CoolerSnipper class from snipping_windows"""
+    return (snipping_windows.loc[:, ["region"]].drop_duplicates()
+                                              .apply(lambda x: bioframe.region.parse_region(x["region"]), axis=1, result_type="expand")
+                                              .rename(columns={0: "chrom", 1: "start", 2: "end"}))
