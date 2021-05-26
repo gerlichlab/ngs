@@ -55,7 +55,7 @@ def get_expected(
     final_frame = pd.concat(
         (coordinate_frame, expected_df.drop("region", axis=1)), axis=1
     )
-    return final_frame
+    return expected_df
 
 
 def get_arms_hg19() -> pd.DataFrame:
@@ -101,7 +101,7 @@ def assign_regions(
     )
     # assign chromosomal arm to each position
     snipping_windows = cooltools.snipping.assign_regions(
-        snipping_windows, list(arms.itertuples(index=False, name=None))
+        snipping_windows, bioframe.parse_regions(arms)
     )
     return snipping_windows
 
@@ -152,6 +152,7 @@ def do_pileup_obs_exp(
     clr: cooler.Cooler,
     expected_df: pd.DataFrame,
     snipping_windows: pd.DataFrame,
+    regions: pd.DataFrame,
     proc: int = 5,
     collapse: bool = True,
 ) -> np.ndarray:
@@ -163,7 +164,7 @@ def do_pileup_obs_exp(
     The collapse parameter specifies whether to return
     the average window over all piles (collapse=True), or the individual
     windows (collapse=False)."""
-    oe_snipper = cooltools.snipping.ObsExpSnipper(clr, expected_df)
+    oe_snipper = cooltools.snipping.ObsExpSnipper(clr, expected_df, regions=bioframe.parse_regions(regions))
     # set warnings filter to ignore RuntimeWarnings since cooltools
     # does not check whether there are inf or 0 values in
     # the expected dataframe
@@ -184,6 +185,7 @@ def do_pileup_obs_exp(
 def do_pileup_iccf(
     clr: cooler.Cooler,
     snipping_windows: pd.DataFrame,
+    regions: pd.DataFrame,
     proc: int = 5,
     collapse: bool = True,
 ) -> np.ndarray:
@@ -194,7 +196,7 @@ def do_pileup_iccf(
     parameter specifies whether to return
     the average window over all piles (collapse=True), or the individual
     windows (collapse=False)."""
-    iccf_snipper = cooltools.snipping.CoolerSnipper(clr)
+    iccf_snipper = cooltools.snipping.CoolerSnipper(clr, regions=bioframe.parse_regions(regions))
     with multiprocess.Pool(proc) as pool:
         iccf_pile = cooltools.snipping.pileup(
             snipping_windows, iccf_snipper.select, iccf_snipper.snip, map=pool.map
@@ -394,7 +396,7 @@ def get_pairing_score(
     windows.loc[:, "binID"] = regions["binID"]
     windows = windows.dropna()
     # generate pileup
-    pile = do_pileup_iccf(clr, windows, collapse=False)
+    pile = do_pileup_iccf(clr, windows, collapse=False, regions=arms)
     # convert to dataframe
     pile_frame = pile_to_frame(pile)
     if blank_diag:
@@ -462,7 +464,7 @@ def get_pairing_score_obs_exp(
     windows.loc[:, "binID"] = regions["binID"]
     windows = windows.dropna()
     # generate pileup
-    pile = do_pileup_obs_exp(clr, expected, windows, collapse=False)
+    pile = do_pileup_obs_exp(clr, expected, windows, collapse=False, regions=arms)
     # convert to dataframe
     pile_frame = pile_to_frame(pile)
     # replace inf with nan
@@ -489,9 +491,9 @@ def extract_windows_different_sizes_iccf(regions, arms, cooler_file, processes=2
     """
     # assign arms to regions
     snipping_windows = cooltools.snipping.assign_regions(
-        regions, list(arms.itertuples(index=False, name=None))
+        regions, bioframe.parse_regions(arms)
     ).dropna()
-    iccf_snipper = cooltools.snipping.CoolerSnipper(cooler_file)
+    iccf_snipper = cooltools.snipping.CoolerSnipper(cooler_file, regions=bioframe.parse_regions(arms))
     with multiprocess.Pool(processes) as pool:
         result = flexible_pileup(
             snipping_windows, iccf_snipper.select, iccf_snipper.snip, mapper=pool.map
@@ -509,9 +511,9 @@ def extract_windows_different_sizes_obs_exp(
     """
     # assign arms to regions
     snipping_windows = cooltools.snipping.assign_regions(
-        regions, list(arms.itertuples(index=False, name=None))
+        regions, bioframe.parse_regions(arms)
     ).dropna()
-    oe_snipper = cooltools.snipping.ObsExpSnipper(cooler_file, expected_df)
+    oe_snipper = cooltools.snipping.ObsExpSnipper(cooler_file, expected_df, regions=bioframe.parse_regions(arms))
     with multiprocess.Pool(processes) as pool:
         result = flexible_pileup(
             snipping_windows, oe_snipper.select, oe_snipper.snip, mapper=pool.map

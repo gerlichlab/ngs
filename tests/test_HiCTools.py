@@ -218,7 +218,7 @@ class TestPileupICCF(unittest.TestCase):
             50000, 10000, position_frame["chrom"], position_frame["pos"], arms
         )
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        result = HT.do_pileup_iccf(cooler_file, assigned, proc=1, collapse=False)
+        result = HT.do_pileup_iccf(cooler_file, assigned, proc=1, collapse=False, regions=arms)
         expected = np.load("testFiles/test_pileups_iccf_noCollapse.npy")
         self.assertTrue(np.allclose(result, expected))
 
@@ -230,7 +230,7 @@ class TestPileupICCF(unittest.TestCase):
             50000, 10000, position_frame["chrom"], position_frame["pos"], arms
         )
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        result = HT.do_pileup_iccf(cooler_file, assigned, proc=1, collapse=True)
+        result = HT.do_pileup_iccf(cooler_file, assigned, proc=1, collapse=True, regions=arms)
         expected = np.load("testFiles/test_pileups_iccf_collapse.npy")
         self.assertTrue(np.allclose(result, expected))
 
@@ -239,7 +239,7 @@ class TestPileupICCF(unittest.TestCase):
         positions = pd.read_csv("testFiles/testAssignRegions.csv")
         arms = HT.get_arms_hg19()
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
-        result = HT.do_pileup_iccf(cooler_file, positions, proc=1, collapse=True)
+        result = HT.do_pileup_iccf(cooler_file, positions, proc=1, collapse=True, regions=arms)
         expected = np.load("testFiles/real_data_iccf_pileup_collapsed.npy")
         self.assertTrue(np.allclose(result, expected))
 
@@ -247,7 +247,7 @@ class TestPileupICCF(unittest.TestCase):
         positions = pd.read_csv("testFiles/testAssignRegions.csv")
         arms = HT.get_arms_hg19()
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
-        result = HT.do_pileup_iccf(cooler_file, positions, proc=1, collapse=False)
+        result = HT.do_pileup_iccf(cooler_file, positions, proc=1, collapse=False, regions=arms)
         expected = np.load("testFiles/real_data_iccf_pileup_not_collapsed.npy")
         self.assertTrue(np.allclose(result, expected, equal_nan=True))
 
@@ -263,9 +263,9 @@ class TestPileupObsExp(unittest.TestCase):
             50000, 10000, position_frame["chrom"], position_frame["pos"], arms
         )
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        exp_f = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        exp_f = HT.get_expected(cooler_file, arms, ignore_diagonals=0)
         result = HT.do_pileup_obs_exp(
-            cooler_file, exp_f, assigned, proc=1, collapse=False
+            cooler_file, exp_f, assigned, proc=1, collapse=False, regions=arms
         )
         expected = np.load("testFiles/test_pileups_obsExp_noCollapse.npy")
         self.assertTrue(np.allclose(result, expected))
@@ -278,9 +278,9 @@ class TestPileupObsExp(unittest.TestCase):
             50000, 10000, position_frame["chrom"], position_frame["pos"], arms
         )
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        exp_f = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        exp_f = HT.get_expected(cooler_file, arms, ignore_diagonals=0)
         result = HT.do_pileup_obs_exp(
-            cooler_file, exp_f, assigned, proc=1, collapse=True
+            cooler_file, exp_f, assigned, proc=1, collapse=True, regions=arms
         )
         expected = np.load("testFiles/test_pileups_obsExp_collapse.npy")
         self.assertTrue(np.allclose(result, expected))
@@ -292,7 +292,7 @@ class TestPileupObsExp(unittest.TestCase):
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
         expected = HT.get_expected(cooler_file, arms)
         result = HT.do_pileup_obs_exp(
-            cooler_file, expected, positions, proc=1, collapse=True
+            cooler_file, expected, positions, proc=1, collapse=True, regions=arms
         )
         expected = np.load("testFiles/real_data_obsexp_pileup_collapsed.npy")
         self.assertTrue(np.allclose(result, expected))
@@ -303,7 +303,7 @@ class TestPileupObsExp(unittest.TestCase):
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
         expected = HT.get_expected(cooler_file, arms)
         result = HT.do_pileup_obs_exp(
-            cooler_file, expected, positions, proc=1, collapse=False
+            cooler_file, expected, positions, proc=1, collapse=False, regions=arms
         )
         expected = np.load("testFiles/real_data_obsexp_pileup_not_collapsed.npy")
         self.assertTrue(np.allclose(result, expected, equal_nan=True))
@@ -319,7 +319,7 @@ class TestPairingScoreObsExp(unittest.TestCase):
         position_frame.loc[:, "mid"] = position_frame["pos"]
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        exp_f = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        exp_f = HT.get_expected(cooler_file, arms, ignore_diagonals=0)
         pairing_score = HT.get_pairing_score_obs_exp(
             cooler_file, exp_f, 50000, regions=position_frame, arms=arms, norm=False
         )
@@ -331,7 +331,7 @@ class TestPairingScoreObsExp(unittest.TestCase):
         genome-wide without median normalization from synthetic Hi-C data."""
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        exp_f = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        exp_f = HT.get_expected(cooler_file, arms, ignore_diagonals=0)
         pairing_score = HT.get_pairing_score_obs_exp(
             cooler_file, exp_f, 50000, arms=arms, norm=False
         )
@@ -350,7 +350,7 @@ class TestPairingScoreObsExp(unittest.TestCase):
         position_frame.loc[:, "mid"] = position_frame["pos"]
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        exp_f = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        exp_f = HT.get_expected(cooler_file, arms, ignore_diagonals=0)
         pairing_score = HT.get_pairing_score_obs_exp(
             cooler_file, exp_f, 50000, arms=arms, norm=True
         )
@@ -369,7 +369,7 @@ class TestPairingScoreObsExp(unittest.TestCase):
         position_frame.loc[:, "mid"] = position_frame["pos"]
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        exp_f = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        exp_f = HT.get_expected(cooler_file, arms, ignore_diagonals=0)
         bad_call = partial(
             HT.get_pairing_score_obs_exp,
             cooler_file,
