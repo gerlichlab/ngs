@@ -132,8 +132,10 @@ class TestGetExpected(unittest.TestCase):
         result = HT.get_expected(self.cooler, self.arms, proc=1, ignore_diagonals=0)
         check = pd.read_csv("testFiles/test_expected_chrSyn.csv")
         # merge regions for new expected format
-        check.loc[:, "region"] = check.apply(lambda x: f"{x['chrom']}:{x['start']}-{x['end']}", axis=1)
-        check_final = check.drop(columns=["chrom","start","end"])[result.columns]
+        check.loc[:, "region"] = check.apply(
+            lambda x: f"{x['chrom']}:{x['start']}-{x['end']}", axis=1
+        )
+        check_final = check.drop(columns=["chrom", "start", "end"])[result.columns]
         assert_frame_equal(result, check_final)
 
     def test_synthetic_data_mult_chroms(self):
@@ -151,8 +153,10 @@ class TestGetExpected(unittest.TestCase):
         result = HT.get_expected(self.cooler, arms, proc=1, ignore_diagonals=0)
         check = pd.read_csv("testFiles/test_expected_multiple_chroms.csv")
         # merge regions for new expected format
-        check.loc[:, "region"] = check.apply(lambda x: f"{x['chrom']}:{x['start']}-{x['end']}", axis=1)
-        check_final = check.drop(columns=["chrom","start","end"])[result.columns]
+        check.loc[:, "region"] = check.apply(
+            lambda x: f"{x['chrom']}:{x['start']}-{x['end']}", axis=1
+        )
+        check_final = check.drop(columns=["chrom", "start", "end"])[result.columns]
         assert_frame_equal(result, check_final)
 
     @unittest.skipIf(
@@ -167,11 +171,19 @@ class TestGetExpected(unittest.TestCase):
         cooler_file = cooler.Cooler(
             "testFiles/test3_realdata.mcool::/resolutions/50000"
         )
-        result = HT.get_expected(cooler_file, arms, proc=1, ignore_diagonals=0).drop(columns=["count.sum"])
+        result = HT.get_expected(cooler_file, arms, proc=1, ignore_diagonals=0).drop(
+            columns=["count.sum"]
+        )
         check = pd.read_csv("testFiles/test_expected_realdata.csv")
         # merge regions for new expected format
-        check.loc[:, "region"] = check.apply(lambda x: f"{x['chrom']}:{x['start']}-{x['end']}", axis=1)
-        check_final = check.drop(columns=["chrom","start","end"])[result.columns].sort_values(by=["region","diag"]).reset_index(drop=True)
+        check.loc[:, "region"] = check.apply(
+            lambda x: f"{x['chrom']}:{x['start']}-{x['end']}", axis=1
+        )
+        check_final = (
+            check.drop(columns=["chrom", "start", "end"])[result.columns]
+            .sort_values(by=["region", "diag"])
+            .reset_index(drop=True)
+        )
         sorted_result = result.sort_values(by=["region", "diag"]).reset_index(drop=True)
         assert_frame_equal(sorted_result, check_final)
 
@@ -223,7 +235,9 @@ class TestPileupICCF(unittest.TestCase):
             50000, 10000, position_frame["chrom"], position_frame["pos"], arms
         )
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        result = HT.do_pileup_iccf(cooler_file, assigned, proc=1, collapse=False, regions=arms)
+        result = HT.do_pileup_iccf(
+            cooler_file, assigned, proc=1, collapse=False, regions=arms
+        )
         expected = np.load("testFiles/test_pileups_iccf_noCollapse.npy")
         self.assertTrue(np.allclose(result, expected))
 
@@ -235,7 +249,9 @@ class TestPileupICCF(unittest.TestCase):
             50000, 10000, position_frame["chrom"], position_frame["pos"], arms
         )
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        result = HT.do_pileup_iccf(cooler_file, assigned, proc=1, collapse=True, regions=arms)
+        result = HT.do_pileup_iccf(
+            cooler_file, assigned, proc=1, collapse=True, regions=arms
+        )
         expected = np.load("testFiles/test_pileups_iccf_collapse.npy")
         self.assertTrue(np.allclose(result, expected))
 
@@ -244,7 +260,9 @@ class TestPileupICCF(unittest.TestCase):
         positions = pd.read_csv("testFiles/testAssignRegions.csv")
         arms = HT.get_arms_hg19()
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
-        result = HT.do_pileup_iccf(cooler_file, positions, proc=1, collapse=True, regions=arms)
+        result = HT.do_pileup_iccf(
+            cooler_file, positions, proc=1, collapse=True, regions=arms
+        )
         expected = np.load("testFiles/real_data_iccf_pileup_collapsed.npy")
         self.assertTrue(np.allclose(result, expected))
 
@@ -252,7 +270,9 @@ class TestPileupICCF(unittest.TestCase):
         positions = pd.read_csv("testFiles/testAssignRegions.csv")
         arms = HT.get_arms_hg19()
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
-        result = HT.do_pileup_iccf(cooler_file, positions, proc=1, collapse=False, regions=arms)
+        result = HT.do_pileup_iccf(
+            cooler_file, positions, proc=1, collapse=False, regions=arms
+        )
         expected = np.load("testFiles/real_data_iccf_pileup_not_collapsed.npy")
         self.assertTrue(np.allclose(result, expected, equal_nan=True))
 
