@@ -27,6 +27,7 @@ jobs:
         pip install pylint==2.8.2
         pip install black==20.8b1
         pip install pytest==6.2.2
+        pip install Cython
         pip install .
     - name: Run black
       run: |
