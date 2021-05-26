@@ -47,14 +47,6 @@ def get_expected(
     )
     # account for different number of valid bins in diagonals
     expected_df["balanced.avg"] = expected_df["balanced.sum"] / expected_df["n_valid"]
-    # parse region string
-    chrom, start, end = list(
-        zip(*map(bioframe.region.parse_region_string, expected_df["region"]))
-    )
-    coordinate_frame = pd.DataFrame({"chrom": chrom, "start": start, "end": end})
-    final_frame = pd.concat(
-        (coordinate_frame, expected_df.drop("region", axis=1)), axis=1
-    )
     return expected_df
 
 

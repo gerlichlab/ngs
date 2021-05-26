@@ -131,7 +131,10 @@ class TestGetExpected(unittest.TestCase):
         calculated."""
         result = HT.get_expected(self.cooler, self.arms, proc=1, ignore_diagonals=0)
         check = pd.read_csv("testFiles/test_expected_chrSyn.csv")
-        assert_frame_equal(result, check)
+        # merge regions for new expected format
+        check.loc[:, "region"] = check.apply(lambda x: f"{x['chrom']}:{x['start']}-{x['end']}", axis=1)
+        check_final = check.drop(columns=["chrom","start","end"])[result.columns]
+        assert_frame_equal(result, check_final)
 
     def test_synthetic_data_mult_chroms(self):
         """Tests expected counts for synthetic Hi-C data
@@ -147,7 +150,10 @@ class TestGetExpected(unittest.TestCase):
         )
         result = HT.get_expected(self.cooler, arms, proc=1, ignore_diagonals=0)
         check = pd.read_csv("testFiles/test_expected_multiple_chroms.csv")
-        assert_frame_equal(result, check)
+        # merge regions for new expected format
+        check.loc[:, "region"] = check.apply(lambda x: f"{x['chrom']}:{x['start']}-{x['end']}", axis=1)
+        check_final = check.drop(columns=["chrom","start","end"])[result.columns]
+        assert_frame_equal(result, check_final)
 
     @unittest.skipIf(
         cooltools.__version__ == "0.2.0", "bug in the old cooltools version"
@@ -161,14 +167,13 @@ class TestGetExpected(unittest.TestCase):
         cooler_file = cooler.Cooler(
             "testFiles/test3_realdata.mcool::/resolutions/50000"
         )
-        result = HT.get_expected(cooler_file, arms, proc=1, ignore_diagonals=0)
-        result_sorted = (
-            result.sort_values(by=["chrom", "start", "end", "diag"])
-            .drop(columns="count.sum")
-            .reset_index(drop=True)
-        )
+        result = HT.get_expected(cooler_file, arms, proc=1, ignore_diagonals=0).drop(columns=["count.sum"])
         check = pd.read_csv("testFiles/test_expected_realdata.csv")
-        assert_frame_equal(result_sorted, check)
+        # merge regions for new expected format
+        check.loc[:, "region"] = check.apply(lambda x: f"{x['chrom']}:{x['start']}-{x['end']}", axis=1)
+        check_final = check.drop(columns=["chrom","start","end"])[result.columns].sort_values(by=["region","diag"]).reset_index(drop=True)
+        sorted_result = result.sort_values(by=["region", "diag"]).reset_index(drop=True)
+        assert_frame_equal(sorted_result, check_final)
 
 
 class TestAssignRegions(unittest.TestCase):

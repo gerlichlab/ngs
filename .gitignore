@@ -65,3 +65,4 @@ target/
 
 testFiles/generateTestFiles/*
 playground/*
+.pytest_cache/*
