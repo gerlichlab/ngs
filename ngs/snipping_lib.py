@@ -3,7 +3,6 @@ from cooltools.snipping"""
 from functools import partial
 import warnings
 import numpy as np
-import bioframe
 
 
 def flexible_pileup(features, data_select, data_snip, mapper=map):
