@@ -29,6 +29,7 @@ jobs:
         pip install pytest==6.2.2
         pip install numpy>=1.17.3
         pip install Cython
+        pip install wheel
         pip install .
     - name: Run black
       run: |
