@@ -175,6 +175,7 @@ def do_pileup_obs_exp(
         return collapsed_pile
     return oe_pile
 
+
 def do_pileup_iccf(
     clr: cooler.Cooler,
     snipping_windows: pd.DataFrame,
@@ -523,6 +524,13 @@ def extract_windows_different_sizes_obs_exp(
 
 def get_regions_from_snipping_windows(snipping_windows):
     """Gets regions for use in CoolerSnipper class from snipping_windows"""
-    return (snipping_windows.loc[:, ["region"]].drop_duplicates()
-                                              .apply(lambda x: bioframe.region.parse_region(x["region"]), axis=1, result_type="expand")
-                                              .rename(columns={0: "chrom", 1: "start", 2: "end"}))
+    return (
+        snipping_windows.loc[:, ["region"]]
+        .drop_duplicates()
+        .apply(
+            lambda x: bioframe.region.parse_region(x["region"]),
+            axis=1,
+            result_type="expand",
+        )
+        .rename(columns={0: "chrom", 1: "start", 2: "end"})
+    )

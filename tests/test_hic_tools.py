@@ -235,9 +235,7 @@ class TestPileupICCF(unittest.TestCase):
             50000, 10000, position_frame["chrom"], position_frame["pos"], arms
         )
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        result = HT.do_pileup_iccf(
-            cooler_file, assigned, proc=1, collapse=False
-        )
+        result = HT.do_pileup_iccf(cooler_file, assigned, proc=1, collapse=False)
         expected = np.load("testFiles/test_pileups_iccf_noCollapse.npy")
         self.assertTrue(np.allclose(result, expected))
 
@@ -249,9 +247,7 @@ class TestPileupICCF(unittest.TestCase):
             50000, 10000, position_frame["chrom"], position_frame["pos"], arms
         )
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        result = HT.do_pileup_iccf(
-            cooler_file, assigned, proc=1, collapse=True
-        )
+        result = HT.do_pileup_iccf(cooler_file, assigned, proc=1, collapse=True)
         expected = np.load("testFiles/test_pileups_iccf_collapse.npy")
         self.assertTrue(np.allclose(result, expected))
 
@@ -259,18 +255,14 @@ class TestPileupICCF(unittest.TestCase):
         """tests whether pileup works on real data."""
         positions = pd.read_csv("testFiles/testAssignRegions.csv")
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
-        result = HT.do_pileup_iccf(
-            cooler_file, positions, proc=1, collapse=True
-        )
+        result = HT.do_pileup_iccf(cooler_file, positions, proc=1, collapse=True)
         expected = np.load("testFiles/real_data_iccf_pileup_collapsed.npy")
         self.assertTrue(np.allclose(result, expected))
 
     def test_no_collapse_real_data(self):
         positions = pd.read_csv("testFiles/testAssignRegions.csv")
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
-        result = HT.do_pileup_iccf(
-            cooler_file, positions, proc=1, collapse=False
-        )
+        result = HT.do_pileup_iccf(cooler_file, positions, proc=1, collapse=False)
         expected = np.load("testFiles/real_data_iccf_pileup_not_collapsed.npy")
         self.assertTrue(np.allclose(result, expected, equal_nan=True))
 
