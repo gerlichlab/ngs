@@ -12,7 +12,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         "multiprocess",
-        "cooltools==0.4.0",
+        "cooltools==v0.4.0",
         "pandas",
         "bioframe==v0.2.0",
         "cooler",
