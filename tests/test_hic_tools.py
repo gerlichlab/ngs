@@ -222,8 +222,8 @@ class TestAssignRegions(unittest.TestCase):
         )
         expected = pd.read_csv("testFiles/testAssignRegions_2.csv")
         assert_frame_equal(result, expected)
-    
-    
+
+
 class TestPileupICCF(unittest.TestCase):
     """Tests pileup of iteratively corrected counts (ICCF)"""
 

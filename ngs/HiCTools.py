@@ -94,7 +94,11 @@ def _assign_supports(features, supports):
             keep_order=True,
             return_overlap=True,
         )
-        overlap_columns = ["chrom_1", "start_1", "end_1"]  # To filter out duplicates later
+        overlap_columns = [
+            "chrom_1",
+            "start_1",
+            "end_1",
+        ]  # To filter out duplicates later
         overlap["overlap_length"] = overlap["overlap_end"] - overlap["overlap_start"]
         # Filter out overlaps with multiple regions:
         overlap = (
@@ -116,7 +120,11 @@ def _assign_supports(features, supports):
                 keep_order=True,
                 return_overlap=True,
             )
-            overlap_columns = [f"chrom{idx}_1", f"start{idx}_1", f"end{idx}_1"]  # To filter out duplicates later
+            overlap_columns = [
+                f"chrom{idx}_1",
+                f"start{idx}_1",
+                f"end{idx}_1",
+            ]  # To filter out duplicates later
             overlap[f"overlap_length{idx}"] = (
                 overlap[f"overlap_end{idx}"] - overlap[f"overlap_start{idx}"]
             )
@@ -137,12 +145,12 @@ def _assign_supports(features, supports):
             ["region1", "region2"], axis=1
         )  # Remove unnecessary columns
 
-
     features = features.set_index(
         index_name if not index_name is None else "index"
     )  # Restore the original index
     features.index.name = index_name  # Restore original index title
     return features
+
 
 def assign_regions(
     window: int,
@@ -161,9 +169,7 @@ def assign_regions(
         binsize, chroms.values, positions.values, window
     )
     # assign chromosomal arm to each position
-    snipping_windows = _assign_supports(
-        snipping_windows, bioframe.parse_regions(arms)
-    )
+    snipping_windows = _assign_supports(snipping_windows, bioframe.parse_regions(arms))
     return snipping_windows
 
 
