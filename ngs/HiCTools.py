@@ -125,7 +125,7 @@ def _assign_supports(features, supports):
                 overlap.sort_values(f"overlap_length{idx}", ascending=False)
                 .drop_duplicates(overlap_columns, keep="first")
                 .sort_index()
-            )
+            ).reset_index(drop=True)
             # Copy single column with overlapping region name:
             features[f"region{idx}"] = overlap["name_2"]
 
