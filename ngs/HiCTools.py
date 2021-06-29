@@ -75,6 +75,75 @@ def get_arms_hg19() -> pd.DataFrame:
     return arms
 
 
+def _assign_supports(features, supports):
+    """assigns supports to entries in snipping windows.
+    Workaround for bug in cooltools 0.2.0 that duplicate
+    supports are not handled correctly. Copied from cooltools.common.assign_regions"""
+    index_name = features.index.name  # Store the name of index
+    features = (
+        features.copy().reset_index()
+    )  # Store the original features' order as a column with original index
+
+    if "chrom" in features.columns:
+        overlap = bioframe.overlap(
+            features,
+            supports,
+            how="left",
+            cols1=["chrom", "start", "end"],
+            cols2=["chrom", "start", "end"],
+            keep_order=True,
+            return_overlap=True,
+        )
+        overlap_columns = ["chrom_1", "start_1", "end_1"]  # To filter out duplicates later
+        overlap["overlap_length"] = overlap["overlap_end"] - overlap["overlap_start"]
+        # Filter out overlaps with multiple regions:
+        overlap = (
+            overlap.sort_values("overlap_length", ascending=False)
+            .drop_duplicates(overlap_columns, keep="first")
+            .sort_index()
+        ).reset_index(drop=True)
+        # Copy single column with overlapping region name:
+        features["region"] = overlap["name_2"]
+
+    if "chrom1" in features.columns:
+        for idx in ("1", "2"):
+            overlap = bioframe.overlap(
+                features,
+                supports,
+                how="left",
+                cols1=[f"chrom{idx}", f"start{idx}", f"end{idx}"],
+                cols2=[f"chrom", f"start", f"end"],
+                keep_order=True,
+                return_overlap=True,
+            )
+            overlap_columns = [f"chrom{idx}_1", f"start{idx}_1", f"end{idx}_1"]  # To filter out duplicates later
+            overlap[f"overlap_length{idx}"] = (
+                overlap[f"overlap_end{idx}"] - overlap[f"overlap_start{idx}"]
+            )
+            # Filter out overlaps with multiple regions:
+            overlap = (
+                overlap.sort_values(f"overlap_length{idx}", ascending=False)
+                .drop_duplicates(overlap_columns, keep="first")
+                .sort_index()
+            )
+            # Copy single column with overlapping region name:
+            features[f"region{idx}"] = overlap["name_2"]
+
+        # Form a single column with region names where region1 == region2, and np.nan in other cases:
+        features["region"] = np.where(
+            features["region1"] == features["region2"], features["region1"], np.nan
+        )
+        features = features.drop(
+            ["region1", "region2"], axis=1
+        )  # Remove unnecessary columns
+
+
+    features = features.set_index(
+        index_name if not index_name is None else "index"
+    )  # Restore the original index
+    features.index.name = index_name  # Restore original index title
+    return features
+
 def assign_regions(
     window: int,
     binsize: int,
@@ -92,7 +161,7 @@ def assign_regions(
         binsize, chroms.values, positions.values, window
     )
     # assign chromosomal arm to each position
-    snipping_windows = cooltools.snipping.assign_regions(
+    snipping_windows = _assign_supports(
         snipping_windows, bioframe.parse_regions(arms)
     )
     return snipping_windows
