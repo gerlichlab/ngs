@@ -2,7 +2,7 @@
 import unittest
 from functools import partial
 import pandas as pd
-from pandas.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 import numpy as np
 from scipy.stats import multivariate_normal
 import cooler
@@ -222,6 +222,20 @@ class TestAssignRegions(unittest.TestCase):
         )
         expected = pd.read_csv("testFiles/testAssignRegions_2.csv")
         assert_frame_equal(result, expected)
+    
+    def test_region_spans_multiple_supports(self):
+        """Tests assign regions when region spans multiple supports."""
+        bed_file = pd.read_csv("testFiles/multiple_support_regions.csv")
+        import pdb; pdb.set_trace()
+        result = HT.assign_regions(
+            window=1000000,
+            binsize=20000,
+            chroms=bed_file["chrom"],
+            positions=bed_file["pos"],
+            arms=self.arms,
+        )
+        expected = pd.read_csv("testFiles/multiple_support_regions_result.csv")
+        assert_series_equal(result["region"], expected["region"])
 
 
 class TestPileupICCF(unittest.TestCase):
