@@ -223,6 +223,19 @@ class TestAssignRegions(unittest.TestCase):
         expected = pd.read_csv("testFiles/testAssignRegions_2.csv")
         assert_frame_equal(result, expected)
 
+    def test_region_spans_multiple_supports(self):
+        """Tests assign regions when region spans multiple supports."""
+        bed_file = pd.read_csv("testFiles/multiple_support_regions.csv")
+        result = HT.assign_regions(
+            window=1000000,
+            binsize=20000,
+            chroms=bed_file["chrom"],
+            positions=bed_file["pos"],
+            arms=self.arms,
+        )
+        expected = pd.read_csv("testFiles/multiple_support_regions_result.csv")
+        assert_series_equal(result["region"], expected["region"])
+
 
 class TestPileupICCF(unittest.TestCase):
     """Tests pileup of iteratively corrected counts (ICCF)"""
