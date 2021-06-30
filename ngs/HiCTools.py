@@ -122,7 +122,7 @@ def _assign_supports(features, supports):
                 return_overlap=True,
             )
             overlap_columns = [
-                "index_1" f"chrom{idx}_1",
+                "index_1", f"chrom{idx}_1",
                 f"start{idx}_1",
                 f"end{idx}_1",
             ]  # To filter out duplicates later
