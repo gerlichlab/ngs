@@ -25,6 +25,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pylint==2.8.2
+        pip install astroid==2.5.6
         pip install black==20.8b1
         pip install pytest==6.2.2
         pip install numpy>=1.17.3
