@@ -95,6 +95,7 @@ def _assign_supports(features, supports):
             return_overlap=True,
         )
         overlap_columns = [
+            "index_1",
             "chrom_1",
             "start_1",
             "end_1",
@@ -121,6 +122,7 @@ def _assign_supports(features, supports):
                 return_overlap=True,
             )
             overlap_columns = [
+                "index_1"
                 f"chrom{idx}_1",
                 f"start{idx}_1",
                 f"end{idx}_1",
