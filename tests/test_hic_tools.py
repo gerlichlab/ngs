@@ -238,7 +238,9 @@ class TestAssignRegions(unittest.TestCase):
 
     def test_regions_are_close_to_supports(self):
         """Tests assign regions when regions are close to supports -> bug was found"""
-        bed_file = pd.read_csv("testFiles/regions_close_to_support_boundary.tsv", sep="\t")
+        bed_file = pd.read_csv(
+            "testFiles/regions_close_to_support_boundary.tsv", sep="\t"
+        )
         result = HT.assign_regions(
             window=1000000,
             binsize=20000,
@@ -246,8 +248,12 @@ class TestAssignRegions(unittest.TestCase):
             positions=bed_file["pos"],
             arms=self.arms,
         )
-        expected = pd.read_csv("testFiles/regions_close_to_support_boundary_result.tsv", delim_whitespace=True)
+        expected = pd.read_csv(
+            "testFiles/regions_close_to_support_boundary_result.tsv",
+            delim_whitespace=True,
+        )
         assert_series_equal(result["region"], expected["region"])
+
 
 class TestPileupICCF(unittest.TestCase):
     """Tests pileup of iteratively corrected counts (ICCF)"""
