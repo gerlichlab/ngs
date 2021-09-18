@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="ngs",
-    version="0.2",
+    version="0.3",
     author="Michael Mitter",
     author_email="michael_mitter@hotmail.com",
     description="Scripts for NGS analysis",
@@ -12,8 +12,8 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         "multiprocess",
-        "cooltools==v0.4.0",
-        "pandas",
+        "cooltools==0.4.0",
+        "pandas==1.2.4",
         "bioframe==v0.2.0",
         "cooler",
         "pairtools",

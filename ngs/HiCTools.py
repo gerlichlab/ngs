@@ -47,15 +47,7 @@ def get_expected(
     )
     # account for different number of valid bins in diagonals
     expected_df["balanced.avg"] = expected_df["balanced.sum"] / expected_df["n_valid"]
-    # parse region string
-    chrom, start, end = list(
-        zip(*map(bioframe.region.parse_region_string, expected_df["region"]))
-    )
-    coordinate_frame = pd.DataFrame({"chrom": chrom, "start": start, "end": end})
-    final_frame = pd.concat(
-        (coordinate_frame, expected_df.drop("region", axis=1)), axis=1
-    )
-    return final_frame
+    return expected_df
 
 
 def get_arms_hg19() -> pd.DataFrame:
@@ -83,6 +75,85 @@ def get_arms_hg19() -> pd.DataFrame:
     return arms
 
 
+def _assign_supports(features, supports):
+    """assigns supports to entries in snipping windows.
+    Workaround for bug in cooltools 0.2.0 that duplicate
+    supports are not handled correctly. Copied from cooltools.common.assign_regions"""
+    index_name = features.index.name  # Store the name of index
+    features = (
+        features.copy().reset_index()
+    )  # Store the original features' order as a column with original index
+
+    if "chrom" in features.columns:
+        overlap = bioframe.overlap(
+            features,
+            supports,
+            how="left",
+            cols1=["chrom", "start", "end"],
+            cols2=["chrom", "start", "end"],
+            keep_order=True,
+            return_overlap=True,
+        )
+        overlap_columns = [
+            "index_1",
+            "chrom_1",
+            "start_1",
+            "end_1",
+        ]  # To filter out duplicates later
+        overlap["overlap_length"] = overlap["overlap_end"] - overlap["overlap_start"]
+        # Filter out overlaps with multiple regions:
+        overlap = (
+            overlap.sort_values("overlap_length", ascending=False)
+            .drop_duplicates(overlap_columns, keep="first")
+            .sort_index()
+        ).reset_index(drop=True)
+        # Copy single column with overlapping region name:
+        features["region"] = overlap["name_2"]
+
+    if "chrom1" in features.columns:
+        for idx in ("1", "2"):
+            overlap = bioframe.overlap(
+                features,
+                supports,
+                how="left",
+                cols1=[f"chrom{idx}", f"start{idx}", f"end{idx}"],
+                cols2=[f"chrom", f"start", f"end"],
+                keep_order=True,
+                return_overlap=True,
+            )
+            overlap_columns = [
+                "index_1",
+                f"chrom{idx}_1",
+                f"start{idx}_1",
+                f"end{idx}_1",
+            ]  # To filter out duplicates later
+            overlap[f"overlap_length{idx}"] = (
+                overlap[f"overlap_end{idx}"] - overlap[f"overlap_start{idx}"]
+            )
+            # Filter out overlaps with multiple regions:
+            overlap = (
+                overlap.sort_values(f"overlap_length{idx}", ascending=False)
+                .drop_duplicates(overlap_columns, keep="first")
+                .sort_index()
+            ).reset_index(drop=True)
+            # Copy single column with overlapping region name:
+            features[f"region{idx}"] = overlap["name_2"]
+
+        # Form a single column with region names where region1 == region2, and np.nan in other cases:
+        features["region"] = np.where(
+            features["region1"] == features["region2"], features["region1"], np.nan
+        )
+        features = features.drop(
+            ["region1", "region2"], axis=1
+        )  # Remove unnecessary columns
+
+    features = features.set_index(
+        index_name if not index_name is None else "index"
+    )  # Restore the original index
+    features.index.name = index_name  # Restore original index title
+    return features
+
+
 def assign_regions(
     window: int,
     binsize: int,
@@ -100,9 +171,7 @@ def assign_regions(
         binsize, chroms.values, positions.values, window
     )
     # assign chromosomal arm to each position
-    snipping_windows = cooltools.snipping.assign_regions(
-        snipping_windows, list(arms.itertuples(index=False, name=None))
-    )
+    snipping_windows = _assign_supports(snipping_windows, bioframe.parse_regions(arms))
     return snipping_windows
 
 
@@ -163,7 +232,10 @@ def do_pileup_obs_exp(
     The collapse parameter specifies whether to return
     the average window over all piles (collapse=True), or the individual
     windows (collapse=False)."""
-    oe_snipper = cooltools.snipping.ObsExpSnipper(clr, expected_df)
+    region_frame = get_regions_from_snipping_windows(expected_df)
+    oe_snipper = cooltools.snipping.ObsExpSnipper(
+        clr, expected_df, regions=bioframe.parse_regions(region_frame)
+    )
     # set warnings filter to ignore RuntimeWarnings since cooltools
     # does not check whether there are inf or 0 values in
     # the expected dataframe
@@ -194,7 +266,11 @@ def do_pileup_iccf(
     parameter specifies whether to return
     the average window over all piles (collapse=True), or the individual
     windows (collapse=False)."""
-    iccf_snipper = cooltools.snipping.CoolerSnipper(clr)
+    # get regions from snipping windows
+    region_frame = get_regions_from_snipping_windows(snipping_windows)
+    iccf_snipper = cooltools.snipping.CoolerSnipper(
+        clr, regions=bioframe.parse_regions(region_frame)
+    )
     with multiprocess.Pool(proc) as pool:
         iccf_pile = cooltools.snipping.pileup(
             snipping_windows, iccf_snipper.select, iccf_snipper.snip, map=pool.map
@@ -489,9 +565,11 @@ def extract_windows_different_sizes_iccf(regions, arms, cooler_file, processes=2
     """
     # assign arms to regions
     snipping_windows = cooltools.snipping.assign_regions(
-        regions, list(arms.itertuples(index=False, name=None))
+        regions, bioframe.parse_regions(arms)
     ).dropna()
-    iccf_snipper = cooltools.snipping.CoolerSnipper(cooler_file)
+    iccf_snipper = cooltools.snipping.CoolerSnipper(
+        cooler_file, regions=bioframe.parse_regions(arms)
+    )
     with multiprocess.Pool(processes) as pool:
         result = flexible_pileup(
             snipping_windows, iccf_snipper.select, iccf_snipper.snip, mapper=pool.map
@@ -509,11 +587,27 @@ def extract_windows_different_sizes_obs_exp(
     """
     # assign arms to regions
     snipping_windows = cooltools.snipping.assign_regions(
-        regions, list(arms.itertuples(index=False, name=None))
+        regions, bioframe.parse_regions(arms)
     ).dropna()
-    oe_snipper = cooltools.snipping.ObsExpSnipper(cooler_file, expected_df)
+    oe_snipper = cooltools.snipping.ObsExpSnipper(
+        cooler_file, expected_df, regions=bioframe.parse_regions(arms)
+    )
     with multiprocess.Pool(processes) as pool:
         result = flexible_pileup(
             snipping_windows, oe_snipper.select, oe_snipper.snip, mapper=pool.map
         )
     return result
+
+
+def get_regions_from_snipping_windows(snipping_windows):
+    """Gets regions for use in CoolerSnipper class from snipping_windows"""
+    return (
+        snipping_windows.loc[:, ["region"]]
+        .drop_duplicates()
+        .apply(
+            lambda x: bioframe.region.parse_region(x["region"]),
+            axis=1,
+            result_type="expand",
+        )
+        .rename(columns={0: "chrom", 1: "start", 2: "end"})
+    )

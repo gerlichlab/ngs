@@ -2,7 +2,7 @@
 import unittest
 from functools import partial
 import pandas as pd
-from pandas.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 import numpy as np
 from scipy.stats import multivariate_normal
 import cooler
@@ -131,7 +131,12 @@ class TestGetExpected(unittest.TestCase):
         calculated."""
         result = HT.get_expected(self.cooler, self.arms, proc=1, ignore_diagonals=0)
         check = pd.read_csv("testFiles/test_expected_chrSyn.csv")
-        assert_frame_equal(result, check)
+        # merge regions for new expected format
+        check.loc[:, "region"] = check.apply(
+            lambda x: f"{x['chrom']}:{x['start']}-{x['end']}", axis=1
+        )
+        check_final = check.drop(columns=["chrom", "start", "end"])[result.columns]
+        assert_frame_equal(result, check_final)
 
     def test_synthetic_data_mult_chroms(self):
         """Tests expected counts for synthetic Hi-C data
@@ -147,7 +152,12 @@ class TestGetExpected(unittest.TestCase):
         )
         result = HT.get_expected(self.cooler, arms, proc=1, ignore_diagonals=0)
         check = pd.read_csv("testFiles/test_expected_multiple_chroms.csv")
-        assert_frame_equal(result, check)
+        # merge regions for new expected format
+        check.loc[:, "region"] = check.apply(
+            lambda x: f"{x['chrom']}:{x['start']}-{x['end']}", axis=1
+        )
+        check_final = check.drop(columns=["chrom", "start", "end"])[result.columns]
+        assert_frame_equal(result, check_final)
 
     @unittest.skipIf(
         cooltools.__version__ == "0.2.0", "bug in the old cooltools version"
@@ -161,14 +171,21 @@ class TestGetExpected(unittest.TestCase):
         cooler_file = cooler.Cooler(
             "testFiles/test3_realdata.mcool::/resolutions/50000"
         )
-        result = HT.get_expected(cooler_file, arms, proc=1, ignore_diagonals=0)
-        result_sorted = (
-            result.sort_values(by=["chrom", "start", "end", "diag"])
-            .drop(columns="count.sum")
-            .reset_index(drop=True)
+        result = HT.get_expected(cooler_file, arms, proc=1, ignore_diagonals=0).drop(
+            columns=["count.sum"]
         )
         check = pd.read_csv("testFiles/test_expected_realdata.csv")
-        assert_frame_equal(result_sorted, check)
+        # merge regions for new expected format
+        check.loc[:, "region"] = check.apply(
+            lambda x: f"{x['chrom']}:{x['start']}-{x['end']}", axis=1
+        )
+        check_final = (
+            check.drop(columns=["chrom", "start", "end"])[result.columns]
+            .sort_values(by=["region", "diag"])
+            .reset_index(drop=True)
+        )
+        sorted_result = result.sort_values(by=["region", "diag"]).reset_index(drop=True)
+        assert_frame_equal(sorted_result, check_final)
 
 
 class TestAssignRegions(unittest.TestCase):
@@ -206,6 +223,37 @@ class TestAssignRegions(unittest.TestCase):
         expected = pd.read_csv("testFiles/testAssignRegions_2.csv")
         assert_frame_equal(result, expected)
 
+    def test_region_spans_multiple_supports(self):
+        """Tests assign regions when region spans multiple supports."""
+        bed_file = pd.read_csv("testFiles/multiple_support_regions.csv")
+        result = HT.assign_regions(
+            window=1000000,
+            binsize=20000,
+            chroms=bed_file["chrom"],
+            positions=bed_file["pos"],
+            arms=self.arms,
+        )
+        expected = pd.read_csv("testFiles/multiple_support_regions_result.csv")
+        assert_series_equal(result["region"], expected["region"])
+
+    def test_regions_are_close_to_supports(self):
+        """Tests assign regions when regions are close to supports -> bug was found"""
+        bed_file = pd.read_csv(
+            "testFiles/regions_close_to_support_boundary.tsv", sep="\t"
+        )
+        result = HT.assign_regions(
+            window=1000000,
+            binsize=20000,
+            chroms=bed_file["chrom"],
+            positions=bed_file["pos"],
+            arms=self.arms,
+        )
+        expected = pd.read_csv(
+            "testFiles/regions_close_to_support_boundary_result.tsv",
+            delim_whitespace=True,
+        )
+        assert_series_equal(result["region"], expected["region"])
+
 
 class TestPileupICCF(unittest.TestCase):
     """Tests pileup of iteratively corrected counts (ICCF)"""
@@ -237,7 +285,6 @@ class TestPileupICCF(unittest.TestCase):
     def test_collapse_real_data(self):
         """tests whether pileup works on real data."""
         positions = pd.read_csv("testFiles/testAssignRegions.csv")
-        arms = HT.get_arms_hg19()
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
         result = HT.do_pileup_iccf(cooler_file, positions, proc=1, collapse=True)
         expected = np.load("testFiles/real_data_iccf_pileup_collapsed.npy")
@@ -245,7 +292,6 @@ class TestPileupICCF(unittest.TestCase):
 
     def test_no_collapse_real_data(self):
         positions = pd.read_csv("testFiles/testAssignRegions.csv")
-        arms = HT.get_arms_hg19()
         cooler_file = cooler.Cooler("testFiles/test3_realdata.mcool::resolutions/50000")
         result = HT.do_pileup_iccf(cooler_file, positions, proc=1, collapse=False)
         expected = np.load("testFiles/real_data_iccf_pileup_not_collapsed.npy")
@@ -263,7 +309,7 @@ class TestPileupObsExp(unittest.TestCase):
             50000, 10000, position_frame["chrom"], position_frame["pos"], arms
         )
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        exp_f = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        exp_f = HT.get_expected(cooler_file, arms, ignore_diagonals=0)
         result = HT.do_pileup_obs_exp(
             cooler_file, exp_f, assigned, proc=1, collapse=False
         )
@@ -278,7 +324,7 @@ class TestPileupObsExp(unittest.TestCase):
             50000, 10000, position_frame["chrom"], position_frame["pos"], arms
         )
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        exp_f = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        exp_f = HT.get_expected(cooler_file, arms, ignore_diagonals=0)
         result = HT.do_pileup_obs_exp(
             cooler_file, exp_f, assigned, proc=1, collapse=True
         )
@@ -319,7 +365,7 @@ class TestPairingScoreObsExp(unittest.TestCase):
         position_frame.loc[:, "mid"] = position_frame["pos"]
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        exp_f = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        exp_f = HT.get_expected(cooler_file, arms, ignore_diagonals=0)
         pairing_score = HT.get_pairing_score_obs_exp(
             cooler_file, exp_f, 50000, regions=position_frame, arms=arms, norm=False
         )
@@ -331,7 +377,7 @@ class TestPairingScoreObsExp(unittest.TestCase):
         genome-wide without median normalization from synthetic Hi-C data."""
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        exp_f = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        exp_f = HT.get_expected(cooler_file, arms, ignore_diagonals=0)
         pairing_score = HT.get_pairing_score_obs_exp(
             cooler_file, exp_f, 50000, arms=arms, norm=False
         )
@@ -350,7 +396,7 @@ class TestPairingScoreObsExp(unittest.TestCase):
         position_frame.loc[:, "mid"] = position_frame["pos"]
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        exp_f = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        exp_f = HT.get_expected(cooler_file, arms, ignore_diagonals=0)
         pairing_score = HT.get_pairing_score_obs_exp(
             cooler_file, exp_f, 50000, arms=arms, norm=True
         )
@@ -369,7 +415,7 @@ class TestPairingScoreObsExp(unittest.TestCase):
         position_frame.loc[:, "mid"] = position_frame["pos"]
         arms = pd.DataFrame({"chrom": "chrSyn", "start": 0, "end": 4990000}, index=[0])
         cooler_file = cooler.Cooler("testFiles/test2.mcool::/resolutions/10000")
-        exp_f = pd.read_csv("testFiles/test_expected_chrSyn.csv")
+        exp_f = HT.get_expected(cooler_file, arms, ignore_diagonals=0)
         bad_call = partial(
             HT.get_pairing_score_obs_exp,
             cooler_file,
