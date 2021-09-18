@@ -564,7 +564,7 @@ def extract_windows_different_sizes_iccf(regions, arms, cooler_file, processes=2
     arms  -> chromosomal arms
     """
     # assign arms to regions
-    snipping_windows = cooltools.snipping.assign_regions(
+    snipping_windows = _assign_supports(
         regions, bioframe.parse_regions(arms)
     ).dropna()
     iccf_snipper = cooltools.snipping.CoolerSnipper(
@@ -586,7 +586,7 @@ def extract_windows_different_sizes_obs_exp(
     arms  -> chromosomal arms
     """
     # assign arms to regions
-    snipping_windows = cooltools.snipping.assign_regions(
+    snipping_windows = _assign_supports(
         regions, bioframe.parse_regions(arms)
     ).dropna()
     oe_snipper = cooltools.snipping.ObsExpSnipper(
